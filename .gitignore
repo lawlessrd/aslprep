@@ -1,0 +1,9 @@
+
+*.pyc
+aslprep/data/atlas/.DS_Store
+aslprep/data/tests/ds000240/.DS_Store
+aslprep/data/tests/ds000240/sub-01/.DS_Store
+aslprep/data/tests/.DS_Store
+aslprep/data/.DS_Store
+aslprep/.DS_Store
+.DS_Store
