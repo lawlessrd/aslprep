@@ -6,7 +6,6 @@ import os
 import glob as glob 
 import pandas as pd 
 
-
 def get_parser():
     """Build parser object"""
     from argparse import ArgumentParser
