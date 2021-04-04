@@ -31,7 +31,7 @@ def main():
     qclist=[]
     for r, d, f in os.walk(allsubj_dir ):
         for filex in f:
-            if filex.endswith("quality_control_cbf.csv"):
+            if filex.endswith("_quality_control_cbf.csv"):
                 qclist.append(filex)
     datax = []
     for i in qclist:
