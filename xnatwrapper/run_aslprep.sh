@@ -2,7 +2,7 @@
 
 ### Script for aslprep singularity container
 # Dylan Lawless
-# Usage: run_aslprepc: [--bidsdir] [--outdir] [--wrkdir] [--label_info]
+# Usage: run_aslprep: [--bidsdir] [--outdir] [--scan_names] [--examcard] [--fs_license]
 
 
 # Initialize defaults
@@ -10,6 +10,8 @@ export bidsdir=NO_BIDS
 export outdir=NO_OUTDIR
 export level=participant
 export wrkdir=NO_WRKDIR
+export scan_names=NO_SCANNAMES
+export examcard=NO_EXAMCARD
 
 # Parse options
 while [[ $# -gt 0 ]]; do
@@ -19,20 +21,25 @@ while [[ $# -gt 0 ]]; do
       export bidsdir="${2}"; shift; shift ;;
     --outdir)
       export outdir="${2}"; shift; shift ;;
-    --wrkdir)
-      export wrkdir="${2}"; shift; shift ;;
-    --label_info)
-      export label_info="${2}"; shift; shift ;;
+    --scan_names)
+      export scan_names="${2}"; shift; shift ;;
+    --examcard)
+      export examcard="${2}"; shift; shift ;;
+    --fs_license)
+      export fs_license="${2}"; shift; shift ;;
     *)
       echo Unknown input "${1}"; shift ;;
   esac
 done
 
-#Run MRIQC
-aslprep -w ${wrkdir} ${bidsdir} ${outdir} ${level} 
+#Get necessary data form exam card and write to json sidecar
+/opt/xnatwrapper/examcard2json.py -i ${examcard} -s ${scan_names} -b ${bidsdir} 
 
-#Convert outputs
-cd ${outdir}
+#Create tsv file
+/opt/xnatwrapper/create_tsv.py -b ${bidsdir}
+
+#Run MRIQC
+aslprep --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level} 
 
 #Run py scripts to convert outputs
-/opt/xnatwrapper/convert_outputs.py
+/opt/xnatwrapper/html2pdf.py -o ${outdir}

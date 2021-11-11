@@ -238,8 +238,7 @@ RUN pip install --no-cache-dir "$( grep templateflow aslprep-setup.cfg | xargs )
 ### Additions by Dylan Lawless for VUIIS
 
 #Install fpdf, generate machine ID
-RUN pip install --no-cache-dir fpdf && \
-    dbus-uuidgen > /etc/machine-id
+RUN pip install --no-cache-dir fpdf weasyprint glob2 nibabel
 
 #Copy xnatwrapper
 COPY xnatwrapper /opt/xnatwrapper
