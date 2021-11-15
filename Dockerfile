@@ -243,6 +243,8 @@ RUN pip install --no-cache-dir fpdf weasyprint glob2 nibabel
 #Copy xnatwrapper
 COPY xnatwrapper /opt/xnatwrapper
 
+RUN find /opt/xnatwrapper -type d -exec chmod 755 {} \;
+
 ### End
 
 

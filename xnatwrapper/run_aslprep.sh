@@ -38,7 +38,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 #Get necessary data form exam card and write to json sidecar
-/opt/xnatwrapper/examcard2json.py -b ${bidsdir} -i ${examcard} -m0 ${m0scan} -asl ${aslscan}
+/opt/xnatwrapper/examcard2json.py -i ${examcard} -s ${m0scan},${aslscan} -b ${bidsdir} 
 
 #Create tsv file
 /opt/xnatwrapper/create_tsv.py -b ${bidsdir}
