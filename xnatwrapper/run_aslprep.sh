@@ -2,15 +2,16 @@
 
 ### Script for aslprep singularity container
 # Dylan Lawless
-# Usage: run_aslprep: [--bidsdir] [--outdir] [--scan_names] [--examcard] [--fs_license]
+# Usage: run_aslprep: [--bidsdir] [--outdir] [--m0scan] [--aslscan] [--aslsource] [--examcard] [--fs_license]
 
 
 # Initialize defaults
 export bidsdir=NO_BIDS
 export outdir=NO_OUTDIR
 export level=participant
-export wrkdir=NO_WRKDIR
-export scan_names=NO_SCANNAMES
+export m0scan=NO_M0SCAN
+export aslscan=NO_ASLSCAN
+export aslsource=NO_ASLSOURCE
 export examcard=NO_EXAMCARD
 
 # Parse options
@@ -21,8 +22,12 @@ while [[ $# -gt 0 ]]; do
       export bidsdir="${2}"; shift; shift ;;
     --outdir)
       export outdir="${2}"; shift; shift ;;
-    --scan_names)
-      export scan_names="${2}"; shift; shift ;;
+    --m0scan)
+      export m0scan="${2}"; shift; shift ;;
+    --aslscan)
+      export aslscan="${2}"; shift; shift ;;
+    --aslsource)
+      export aslsource="${2}"; shift; shift ;;
     --examcard)
       export examcard="${2}"; shift; shift ;;
     --fs_license)
@@ -33,7 +38,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 #Get necessary data form exam card and write to json sidecar
-/opt/xnatwrapper/examcard2json.py -i ${examcard} -s ${scan_names} -b ${bidsdir} 
+/opt/xnatwrapper/examcard2json.py -b ${bidsdir} -i ${examcard} -m0 ${m0scan} -asl ${aslscan}
 
 #Create tsv file
 /opt/xnatwrapper/create_tsv.py -b ${bidsdir}

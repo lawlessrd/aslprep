@@ -43,9 +43,6 @@ m0scan metadata fields:
 
 Units of time should always be seconds.
 
-Test: 
-python $ASLPREP/examcard2json.py -i ~/Documents/ASLPrep/examcard2txt/Kaczkurkin_20210201.txt -s pCASL,pCASL_M0 -f sub-01/ses-01/perf/sub-01_ses-01_asl.nii.gz,sub-01/ses-01/perf/sub-01_ses-01_m0scan.nii.gz
-
 '''
 
 import json
@@ -87,6 +84,24 @@ def search_string_in_file(file_name, string_to_search, starting_line):
 	#Return list of tuples containing line numbers and lines where string is found
 	return list_of_results
 
+def modify_json(json_file, s_dict):
+	"""
+	Add contents of s_dict to .json file
+	:param json_file: name of json file
+	:param s_dict: dictionary of info to add to .json file
+	"""
+	if json_file:
+		with open(json_file, 'r') as f:
+			json_contents = json.load(f)
+			json_contents.update(s_dict)
+			f.close
+		with open(json_file, 'w') as f:
+			json.dump(json_contents,f,indent = 4,cls=NumpyEncoder)
+			f.close
+		print('Added exam card information to',json_file)
+	else:
+		print('Files not found or data is not in BIDS format. Please repeat with correct file/structure.')
+		sys.exit()
 
 def main(argv):
 	inputfile = ''
@@ -149,7 +164,11 @@ def main(argv):
 								asl_nii = nii_file.split('/')
 								IntendedFor = '/'.join(asl_nii[-3:])
 								print('\tM0 intended for: ',IntendedFor)
-								scan_dict[scan]["IntendedFor"] = IntendedFor								
+								scan_dict[scan]["IntendedFor"] = IntendedFor	
+				# Add exam card info to m0 json
+				json_file = glob.glob(bids+'/sub-*/ses-*/perf/*m0scan.json')
+				modify_json(json_file[0],scan_dict[scan])
+
 			else:
 				print('\tASL type:',asl_type)
 				scan_dict[scan]["ArterialSpinLabelingType"] = asl_type.upper()
@@ -218,30 +237,17 @@ def main(argv):
 					#bolus = tmp[-1].strip()
 					#print('\tBolus Cut Off Flag:',bolus)
 					scan_dict[scan]["BolusCutOffFlag"] = False
+
+				# Add exam card info to asl json
+				json_file = glob.glob(bids+'/sub-*/ses-*/perf/*asl.json')
+				modify_json(json_file[0],scan_dict[scan])
 		else:
 			print(scan,' not found. Please repeat with correct scan name.')
 			sys.exit()
 
-	# Write to json
-	# should we feed the function only the BIDS directory or the full file paths?
-	i=1
-	for json_file in glob.glob(bids+'/sub-*/ses-*/perf/*.json'):
-		if json_file:
-			with open(json_file, 'r') as f:
-				json_contents = json.load(f)
-				json_contents.update(scan_dict[scannames[i]])
-				f.close
-			with open(json_file, 'w') as f:
-				json.dump(json_contents,f,indent = 4,cls=NumpyEncoder)
-				f.close
-			print('Added exam card information to',json_file)
-		else:
-			print('Files not found or data is not in BIDS format. Please repeat with correct file/structure.')
-			sys.exit()
-		i=i-1
+
 # To do:
 # add check to see if we need to convert the exam card
-# calculate slice timing and add to json
 # dcm2niix
 if __name__ == '__main__':
 	main(sys.argv[1:])
