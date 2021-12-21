@@ -26,8 +26,6 @@ while [[ $# -gt 0 ]]; do
       export m0scan="${2}"; shift; shift ;;
     --aslscan)
       export aslscan="${2}"; shift; shift ;;
-    --aslsource)
-      export aslsource="${2}"; shift; shift ;;
     --examcard)
       export examcard="${2}"; shift; shift ;;
     --fs_license)
