@@ -29,7 +29,7 @@ while [[ $# -gt 0 ]]; do
     --examcard)
       export examcard="${2}"; shift; shift ;;
     --fs-license)
-      export fs-license="${2}"; shift; shift ;;
+      export fs_license="${2}"; shift; shift ;;
     *)
       echo Unknown input "${1}"; shift ;;
   esac
@@ -42,7 +42,7 @@ done
 /opt/xnatwrapper/create_tsv.py -b ${bidsdir}
 
 #Run MRIQC
-aslprep --fs-license-file ${fs-license} ${bidsdir} ${outdir} ${level} 
+aslprep --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level} 
 
 #Run py scripts to convert outputs
 /opt/xnatwrapper/html2pdf.py -o ${outdir}
