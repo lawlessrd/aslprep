@@ -8,14 +8,13 @@ singularity run \
 --bind $(pwd -P)/EmotionBrain_BIDS:/data:ro \
 --bind $(pwd -P)/OUTPUTS:/out:rw \
 --bind $(pwd -P)/license.txt:/license/license.txt \
-aslprep-0.2.7.simg \
+aslprep_v1.simg \
 --bidsdir $(pwd -P)/EmotionBrain_BIDS \
 --outdir $(pwd -P)/OUTPUTS \
---m0scan pCASL_M0
---aslscan pCASL
---examcard $(pwd -P)/EmotionBrain_BIDS/Kaczkurkin_20210201.txt
---fs_license /license/license.txt \
--w $(pwd -P)/work
+--m0scan pCASL_M0 \
+--aslscan pCASL \
+--examcard $(pwd -P)/EmotionBrain_BIDS/Kaczkurkin_20210201.txt \
+--fs_license $(pwd -P)/EmotionBrain_BIDS/license.txt
 
 # Docker
 docker run -ti -m 12GB --rm \
