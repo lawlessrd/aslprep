@@ -29,4 +29,5 @@ lawlessrd/aslprep:0.2.7 \
 --m0scan pCASL_M0 \
 --aslscan pCASL \
 --examcard $(pwd -P)/EmotionBrain_BIDS/Kaczkurkin_20210201.txt \
---fs-license /license/license.txt 
+--fs_license license.txt 
+
