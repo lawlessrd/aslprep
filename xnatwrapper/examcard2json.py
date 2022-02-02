@@ -110,11 +110,11 @@ def main(argv):
 	try:
 		opts, args = getopt.getopt(argv, "hi:s:b:",["input=","scans=","bids="])
 	except getopt.GetoptError:
-		print ('examcard2json.py -i <input_examcard.txt> -s <scan1,scan2> -b <folder>')
+		print('examcard2json.py -i <input_examcard.txt> -s <scan1,scan2> -b <folder>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print ('examcard2json.py -i <input_examcard.txt> -s <scan1,scan2> -b <folder>')
+			print('examcard2json.py -i <input_examcard.txt> -s <scan1,scan2> -b <folder>')
 			sys.exit()
 		elif opt in ("-i", "--input"):
 			inputfile = arg
@@ -122,9 +122,9 @@ def main(argv):
 			scannames = arg.split(',')
 		elif opt in ("-b", "--bids"):
 			bids = arg
-	print('\nExam card: ', inputfile)
-	print('Scans: ', scannames)
-	print('BIDS Folder: ', bids)
+	print(f'\nExam card: ', inputfile)
+	print(f'Scans: ', scannames)
+	print(f'BIDS Folder: ', bids)
 
 
 	#Initialize dictionaries
