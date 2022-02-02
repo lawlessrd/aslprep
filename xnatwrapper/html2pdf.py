@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
-import os, glob
-from weasyprint import HTML, CSS
+import os,glob,sys
+from weasyprint import HTML,CSS
 
 
 def main(argv):

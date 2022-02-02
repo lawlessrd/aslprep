@@ -26,8 +26,7 @@ docker run -ti -m 12GB --rm \
 lawlessrd/aslprep:0.2.7 \
 --bidsdir $(pwd -P)/EmotionBrain_BIDS \
 --outdir $(pwd -P)/OUTPUTS \
---m0scan pCASL_M0
---aslscan pCASL
---examcard $(pwd -P)/EmotionBrain_BIDS/Kaczkurkin_20210201.txt
---fs-license /license/license.txt \
--w $(pwd -P)/work
+--m0scan pCASL_M0 \
+--aslscan pCASL \
+--examcard $(pwd -P)/EmotionBrain_BIDS/Kaczkurkin_20210201.txt \
+--fs-license /license/license.txt 

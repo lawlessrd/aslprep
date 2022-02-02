@@ -28,8 +28,8 @@ while [[ $# -gt 0 ]]; do
       export aslscan="${2}"; shift; shift ;;
     --examcard)
       export examcard="${2}"; shift; shift ;;
-    --fs_license)
-      export fs_license="${2}"; shift; shift ;;
+    --fs-license)
+      export fs-license="${2}"; shift; shift ;;
     *)
       echo Unknown input "${1}"; shift ;;
   esac
