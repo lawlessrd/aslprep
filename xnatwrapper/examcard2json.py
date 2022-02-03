@@ -122,9 +122,9 @@ def main(argv):
 			scannames = arg.split(',')
 		elif opt in ("-b", "--bids"):
 			bids = arg
-	print('Exam card: ' inputfile)
-	print('Scans: ' scannames)
-	print('BIDS Folder: ' bids)
+	print('Exam card: ' + inputfile)
+	print('Scans: ' + scannames)
+	print('BIDS Folder: ' + bids)
 
 
 	#Initialize dictionaries
