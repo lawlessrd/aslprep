@@ -2,17 +2,18 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 
 from nipype.pipeline import engine as pe
+from nipype.interfaces.fsl import Info
 from nipype.interfaces import utility as niu
 from ...niworkflows.engine.workflows import LiterateWorkflow as Workflow
 from ...niworkflows.interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
 from ...interfaces.cbf_computation import (extractCBF, computeCBF, scorescrubCBF, BASILCBF,
-                                           refinemask, qccbf, cbfqroiquant,qccbfge,extractCB)
+                                           refinemask, qccbf, cbfqroiquant,qccbfge,extractCB,
+                                           get_tis)
 from ...niworkflows.interfaces.plotting import (CBFSummary, CBFtsSummary)
 from ...interfaces import DerivativesDataSink
 import numpy as np
 import pandas as pd
 import os
-import tempfile
 from ...config import DEFAULT_MEMORY_MIN_GB
 
 
@@ -70,15 +71,19 @@ def init_cbf_compt_wf(mem_gb, metadata,bids_dir,dummy_vols, omp_nthreads,
 
                     
     workflow = Workflow(name=name)
-    workflow.__desc__ = """\
-The CBF was quantified from  *preproccessed* ASL data using a relatively basic
-model [@detre_perfusion] [@alsop_recommended].
+    workflow.__desc__ = """
+### Cerebral blood flow computation and denoising
+
+*ASLPrep* was configured to calculate cerebral blood flow (CBF) using the following methods. 
+
+The cerebral blood flow (CBF) was quantified from  preprocessed ASL data using a general kinetic model
+[@kinetic].
 """
     inputnode = pe.Node(niu.IdentityInterface(fields=['asl_file', 'in_file', 'asl_mask',
                                                       't1w_tpms', 't1w_mask', 't1_asl_xform',
                                                       'itk_asl_to_t1']),
                         name='inputnode')
-    outputnode = pe.Node(niu.IdentityInterface(fields=['out_cbf', 'out_mean', 'out_score',
+    outputnode = pe.Node(niu.IdentityInterface(fields=['out_cbf', 'out_mean', 'out_score','out_cbfpvwm',
                                                        'out_avgscore', 'out_scrub', 'out_cbfb',
                                                        'out_scoreindex', 'out_cbfpv','out_att']),
                          name='outputnode')
@@ -90,13 +95,7 @@ model [@detre_perfusion] [@alsop_recommended].
     gm_tfm = pe.Node(ApplyTransforms(interpolation='NearestNeighbor', float=True),
                      name='gm_tfm', mem_gb=0.1)
     
-    
-
-    tiscbf=np.add(metadata["PostLabelingDelay"],metadata["LabelingDuration"])
-    if hasattr(tiscbf, '__len__'):
-        tisasl = ",".join([str(i) for i in tiscbf])
-    else:
-        tisasl = str(tiscbf)
+    tiscbf = get_tis(metadata)
 
     def pcaslorasl(metadata):
         if 'CASL' in metadata["ArterialSpinLabelingType"]:
@@ -113,7 +112,7 @@ model [@detre_perfusion] [@alsop_recommended].
     scorescrub = pe.Node(scorescrubCBF(in_thresh=0.7, in_wfun='huber'), mem_gb=0.2,
                          name='scorescrub', run_without_submitting=True)
     basilcbf = pe.Node(BASILCBF(m0scale=M0Scale, bolus=metadata["LabelingDuration"],
-                                m0tr=metadata['RepetitionTime'], pvc=True,tis = tisasl,
+                                m0tr=metadata['RepetitionTime'], pvc=True, tis=tiscbf,
                                 pcasl = pcaslorasl(metadata = metadata)), name='basilcbf',
                        run_without_submitting=True, mem_gb=0.2)
 
@@ -155,11 +154,12 @@ model [@detre_perfusion] [@alsop_recommended].
     ])
 
     if scorescrub:
-        workflow.__desc__ = workflow.__desc__ +  """\
-CBF are susceptible to artifactsdue to low signal to noise ratio  and  sensitivity to  motion, Structural Correlation
-based Outlier Rejection (SCORE) algothim was applied to the CBF to discard few extreme outliers [@score_dolui]. 
-Furthermore,Structural Correlation with RobUst Bayesian (SCRUB) algorithms was applied to the CBF by iteratively 
-reweighted  CBF  with structural tissues probalility maps [@scrub_dolui].
+        workflow.__desc__ = workflow.__desc__ +  """
+
+Structural Correlation based Outlier Rejection (SCORE) algorithm was applied to the CBF timeseries
+to discard CBF volumes with outlying values [@score_dolui] before computing the mean CBF. 
+Following SCORE, the Structural Correlation with RobUst Bayesian (SCRUB) algorithm was applied to the CBF maps
+using structural tissue probability maps to reweight the mean CBF [@score_dolui;@scrub_dolui]. 
 """      
         workflow.connect([
         (refinemaskj, scorescrub, [('out_mask', 'in_mask')]),
@@ -173,13 +173,12 @@ reweighted  CBF  with structural tissues probalility maps [@scrub_dolui].
                                   ('out_scrub', 'out_scrub')]),
         ])
     if basil:
-        workflow.__desc__ = workflow.__desc__ +  """\
-Alternate method of CBF computation is Bayesian Inference
-for Arterial Spin Labeling (BASIL) as implmented in FSL which is  based on Bayeisan inference
-principles [@chappell_basil]. BASIL computed the CBF from ASL incoporating natural varaibility
-of other model parameters and spatial regularization of the estimated perfusion image. BASIL
-also included correction for partial volume effects [@chappell_pvc].
-"""
+        workflow.__desc__ = workflow.__desc__ +  """
+
+CBF was also computed with Bayesian Inference for Arterial Spin Labeling (BASIL) [@chappell_basil], 
+as implemented in *FSL* {fslversion}. BASIL computes CBF using a spatial regularization of the estimated 
+perfusion image and additionally calculates a partial-volume corrected CBF image [@chappell_pvc].
+""".format(fslversion=Info.version().split(':')[0])
         workflow.connect([
          (refinemaskj, basilcbf, [('out_mask', 'mask')]),
          (extractcbf, basilcbf, [(('out_avg', _getfiledir), 'out_basename')]),
@@ -189,6 +188,7 @@ also included correction for partial volume effects [@chappell_pvc].
          (extractcbf, basilcbf, [('out_avg', 'mzero')]),
          (basilcbf, outputnode, [('out_cbfb', 'out_cbfb'),
                                 ('out_cbfpv', 'out_cbfpv'),
+                                ('out_cbfpvwm', 'out_cbfpvwm'),
                                 ('out_att', 'out_att')]),
         ])
             
@@ -235,14 +235,11 @@ def init_cbfqc_compt_wf(mem_gb,asl_file, metadata,omp_nthreads,scorescrub=False,
     """
 
     workflow = Workflow(name=name)
-    workflow.__desc__ = """\
-The following quality control (qc) measures was estimated: framewise displacement and relative
-root mean square dice index. Other qc meaure include dice and jaccard indices, cross-correlation
-and coverage that estimate the coregistration quality of  ASL and T1W images and  normalization
-quality of ASL to template. Quality evaluation index (QEI) was also computed for CBF [@cbfqc].
-The  QEI is  automated for objective quality evaluation of CBF maps and measured the CBF quality
-based on structural similarity,spatial variability and the percentatge  of voxels with  negtaive
-CBF within Grey matter
+    workflow.__desc__ = """
+The Quality evaluation index (QEI) was computed for each CBF map [@cbfqc]. 
+QEI is based on the similarity between the CBF and the structural images, the spatial 
+variability of the CBF image, and the percentage of grey matter voxels containing 
+negative CBF values.  
 """
     inputnode = pe.Node(niu.IdentityInterface(fields=['meancbf', 'avgscore', 'scrub', 'basil',
                                                       'asl_mask', 't1w_tpms',  'confmat',
@@ -360,14 +357,9 @@ def init_cbfgeqc_compt_wf(mem_gb, asl_file, metadata, omp_nthreads,scorescrub=Fa
     """
 
     workflow = Workflow(name=name)
-    workflow.__desc__ = """\
-The following quality control (qc) measures was estimated: dice and jaccard indices, cross-correlation
-and coverage that estimate the coregistration quality of  ASL and T1W images and  normalization
-quality of ASL to template. Quality evaluation index (QEI) was also computed for CBF [@cbfqc].
-The  QEI is  automated for objective quality evaluation of CBF maps and measured the CBF quality
-based on structural similarity,spatial variability and the percentatge  of voxels with  negtaive
-CBF within Grey matter
-"""
+    #workflow.__desc__ = """\
+
+    #"""
     inputnode = pe.Node(niu.IdentityInterface(fields=['meancbf', 'avgscore', 'scrub', 'basil',
                                                       'asl_mask', 't1w_tpms',
                                                       'asl_mask_std', 't1_asl_xform', 'pv',
@@ -474,7 +466,7 @@ def init_cbfplot_wf(mem_gb, metadata, omp_nthreads, scorescrub=False,basil=False
 
     cbftssummary = pe.Node(CBFtsSummary(tr=metadata['RepetitionTime']),
                            name='cbf_ts_summary', mem_gb=2)
-    cbfsummary = pe.Node(CBFSummary(label='cbf'), name='cbf_summary', mem_gb=1)
+    cbfsummary = pe.Node(CBFSummary(label='cbf',vmax=90), name='cbf_summary', mem_gb=1)
     ds_report_cbftsplot = pe.Node(
         DerivativesDataSink(desc='cbftsplot', datatype="figures",  keep_dtype=True),
         name='ds_report_cbftsplot', run_without_submitting=True,
@@ -484,7 +476,7 @@ def init_cbfplot_wf(mem_gb, metadata, omp_nthreads, scorescrub=False,basil=False
         name='ds_report_cbfplot', run_without_submitting=True,
         mem_gb=DEFAULT_MEMORY_MIN_GB)
     workflow.connect(
-        [(inputnode, mrg_xfms, [('t1_asl_xform', 'in1'), ('std2anat_xfm', 'in2')]),
+        [(inputnode, mrg_xfms, [('t1_asl_xform', 'in2'), ('std2anat_xfm', 'in1')]),
                       (inputnode, resample_parc, [('asl_mask', 'reference_image')]),
                       (mrg_xfms, resample_parc, [('out', 'transforms')]),
                       (resample_parc, cbftssummary, [('output_image', 'seg_file')]),
@@ -499,8 +491,8 @@ def init_cbfplot_wf(mem_gb, metadata, omp_nthreads, scorescrub=False,basil=False
        ])
 
     if scorescrub:
-        scoresummary = pe.Node(CBFSummary(label='score'), name='score_summary', mem_gb=1)
-        scrubsummary = pe.Node(CBFSummary(label='scrub'), name='scrub_summary', mem_gb=1)
+        scoresummary = pe.Node(CBFSummary(label='score',vmax=90), name='score_summary', mem_gb=1)
+        scrubsummary = pe.Node(CBFSummary(label='scrub',vmax=90), name='scrub_summary', mem_gb=1)
         ds_report_scoreplot = pe.Node(
            DerivativesDataSink(desc='scoreplot', datatype="figures",  keep_dtype=True),
           name='ds_report_scoreplot', run_without_submitting=True,
@@ -520,8 +512,8 @@ def init_cbfplot_wf(mem_gb, metadata, omp_nthreads, scorescrub=False,basil=False
         ])
 
     if basil:
-        basilsummary = pe.Node(CBFSummary(label='basil'), name='basil_summary', mem_gb=1)
-        pvcsummary = pe.Node(CBFSummary(label='pvc'), name='pvc_summary', mem_gb=1)
+        basilsummary = pe.Node(CBFSummary(label='basil',vmax=100), name='basil_summary', mem_gb=1)
+        pvcsummary = pe.Node(CBFSummary(label='pvc',vmax=120), name='pvc_summary', mem_gb=1)
         ds_report_basilplot = pe.Node(
            DerivativesDataSink(desc='basilplot', datatype="figures",  keep_dtype=True),
             name='ds_report_basilplot', run_without_submitting=True,
@@ -567,7 +559,7 @@ def init_gecbfplot_wf(mem_gb, metadata, omp_nthreads,scorescrub=False,basil=Fals
 
 
 
-    cbfsummary = pe.Node(CBFSummary(label='cbf'), name='cbf_summary', mem_gb=1)
+    cbfsummary = pe.Node(CBFSummary(label='cbf',vmax=90), name='cbf_summary', mem_gb=1)
     ds_report_cbfplot = pe.Node(
         DerivativesDataSink(desc='cbfplot', datatype="figures", keep_dtype=True),
         name='ds_report_cbfplot', run_without_submitting=True,
@@ -579,8 +571,8 @@ def init_gecbfplot_wf(mem_gb, metadata, omp_nthreads,scorescrub=False,basil=Fals
        ])
 
     if scorescrub:
-        scoresummary = pe.Node(CBFSummary(label='score'), name='score_summary', mem_gb=1)
-        scrubsummary = pe.Node(CBFSummary(label='scrub'), name='scrub_summary', mem_gb=1)
+        scoresummary = pe.Node(CBFSummary(label='score',vmax=90), name='score_summary', mem_gb=1)
+        scrubsummary = pe.Node(CBFSummary(label='scrub',vmax=90), name='scrub_summary', mem_gb=1)
         ds_report_scoreplot = pe.Node(
            DerivativesDataSink(desc='scoreplot', datatype="figures",  keep_dtype=True),
           name='ds_report_scoreplot', run_without_submitting=True,
@@ -600,8 +592,8 @@ def init_gecbfplot_wf(mem_gb, metadata, omp_nthreads,scorescrub=False,basil=Fals
         ])
 
     if basil:
-        basilsummary = pe.Node(CBFSummary(label='basil'), name='basil_summary', mem_gb=1)
-        pvcsummary = pe.Node(CBFSummary(label='pvc'), name='pvc_summary', mem_gb=1)
+        basilsummary = pe.Node(CBFSummary(label='basil',vmax=100), name='basil_summary', mem_gb=1)
+        pvcsummary = pe.Node(CBFSummary(label='pvc',vmax=120), name='pvc_summary', mem_gb=1)
         ds_report_basilplot = pe.Node(
            DerivativesDataSink(desc='basilplot', datatype="figures",  keep_dtype=True),
             name='ds_report_basilplot', run_without_submitting=True,
@@ -623,7 +615,13 @@ def init_gecbfplot_wf(mem_gb, metadata, omp_nthreads,scorescrub=False,basil=Fals
 
 
 def init_cbfroiquant_wf(mem_gb, omp_nthreads,scorescrub=False,basil=False,name='cbf_roiquant'):
+
     workflow = Workflow(name=name)
+
+    workflow.__desc__ = """\
+For each CBF map, the ROIs for the following atlases were extracted: the  Harvard-Oxford  and the Schaefer 200 and 400-parcel resolution atlases.
+"""
+
     inputnode = pe.Node(niu.IdentityInterface(fields=['cbf', 'score', 'scrub', 'basil', 'pvc',
                                                       'aslmask', 't1_asl_xform',
                                                       'std2anat_xfm']),
@@ -692,8 +690,8 @@ def init_cbfroiquant_wf(mem_gb, omp_nthreads,scorescrub=False,basil=False,name='
 
     
     
-    workflow.connect([(inputnode, mrg_xfms, [('t1_asl_xform', 'in1'),
-                                             ('std2anat_xfm', 'in2')]),
+    workflow.connect([(inputnode, mrg_xfms, [('t1_asl_xform', 'in2'),
+                                             ('std2anat_xfm', 'in1')]),
                       (inputnode, hvoftrans, [('aslmask', 'reference_image')]),
                       (mrg_xfms, hvoftrans, [('out', 'transforms')]),
                       (inputnode, sc207trans, [('aslmask', 'reference_image')]),
@@ -800,8 +798,8 @@ def init_gecbf_compt_wf(metadata, asl_file,mem_gb, bids_dir,omp_nthreads,M0Scale
                     
     workflow = Workflow(name=name)
     workflow.__desc__ = """\
-The CBF was quantified from  *preproccessed* ASL data  using a relatively basic
-model [@detre_perfusion] [@alsop_recommended]. 
+The CBF was quantified from  *preproccessed* ASL data  using a standard
+model [@detre_perfusion;@alsop_recommended]. 
 """
     inputnode = pe.Node(niu.IdentityInterface(fields=['asl_file', 'in_file', 'asl_mask',
                                                       't1w_tpms', 't1w_mask', 't1_asl_xform',
@@ -809,7 +807,8 @@ model [@detre_perfusion] [@alsop_recommended].
                         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(fields=['out_cbf', 'out_mean', 'out_score',
                                                        'out_avgscore', 'out_scrub', 'out_cbfb',
-                                                       'out_scoreindex', 'out_cbfpv','out_att']),
+                                                       'out_scoreindex', 'out_cbfpv','out_att',
+                                                       'out_cbfpvwm']),
                          name='outputnode')
     # convert tmps to asl_space
     csf_tfm = pe.Node(ApplyTransforms(interpolation='NearestNeighbor', float=True),
@@ -830,12 +829,8 @@ model [@detre_perfusion] [@alsop_recommended].
     controllist = [i for i in range(0, len(idasl)) if idasl[i] == 'control']
     labelist = [i for i in range(0, len(idasl)) if idasl[i] == 'label']
     
-    tiscbf = np.add(metadata['PostLabelingDelay'],metadata['LabelingDuration'])
+    tiscbf = get_tis(metadata)
 
-    if hasattr(tiscbf, '__len__'):
-        tisasl = ",".join([str(i) for i in tiscbf])
-    else:
-        tisasl = str(tiscbf)
     def pcaslorasl(metadata):
         if 'CASL' in metadata["ArterialSpinLabelingType"]:
             pcasl1 = True
@@ -886,15 +881,14 @@ model [@detre_perfusion] [@alsop_recommended].
                              ('t1_asl_xform', 'transforms')]),
         (inputnode, gm_tfm, [(('t1w_tpms', _pick_gm), 'input_image')]),
         (computecbf, outputnode, [('out_cbf', 'out_cbf'),
-                                  ('out_mean', 'out_mean')]),
+                                ('out_mean', 'out_mean')]),
         ])
         if scorescrub:
             workflow.__desc__ = workflow.__desc__ +  """\
-CBF are susceptible to artifacts due to low signal to noise ratio  and  sensitivity to  motion, Structural Correlation
-based Outlier Rejection (SCORE) algothim was applied to the CBF to discard few extreme
-outliers [@score_dolui]. Furthermore,Structural Correlation with RobUst Bayesian (SCRUB)
-algorithms was applied to the CBF by iteratively reweighted  CBF  with structural tissues
-probalility maps [@scrub_dolui].i 
+CBF is susceptible to artifacts due to low signal to noise ratio  and  high sensitivity to  motion. 
+Therefore, the Structural Correlation with RobUst Bayesian (SCRUB) algorithm was applied to the CBF 
+timeseries to discard few extreme outlier volumes (if present) and iteratively reweight the mean CBF with 
+structural tissues probability maps[@score_dolui;@scrub_dolui]. 
 """
             scorescrub1 = pe.Node(scorescrubCBF(in_thresh=0.7, in_wfun='huber'), mem_gb=mem_gb,
                          name='scorescrub', run_without_submitting=True)
@@ -909,14 +903,14 @@ probalility maps [@scrub_dolui].i
             ])
         if basil:
             workflow.__desc__ = workflow.__desc__ + """\
-Alternate method of CBF computation is Bayesian Inference
-for Arterial Spin Labeling (BASIL) as implmented in FSL which is  based on Bayeisan inference
-principles [@chappell_basil]. BASIL computed the CBF from ASL incoporating natural varaibility
-of other model parameters and spatial regularization of the estimated perfusion image. BASIL
-also included correction for partial volume effects [@chappell_pvc].
+In addition, CBF was also computed by Bayesian Inference for Arterial Spin Labeling 
+(BASIL) as implemented in FSL. BASIL is based on Bayesian inference principles
+ [@chappell_basil], and computed CBF from ASL by incorporating natural 
+ variability of other model parameters and spatial regularization of the estimated 
+ perfusion image, including correction of partial volume effects [@chappell_pvc].
 """         
             basilcbf = pe.Node(BASILCBF(m0scale=M0Scale, bolus=metadata["LabelingDuration"],
-                                m0tr=metadata['RepetitionTime'], pvc=True,tis = tisasl,
+                                m0tr=metadata['RepetitionTime'], pvc=True, tis=tiscbf,
                                 pcasl = pcaslorasl(metadata = metadata)), name='basilcbf',
                        run_without_submitting=True, mem_gb=mem_gb)
             workflow.connect([
@@ -928,6 +922,7 @@ also included correction for partial volume effects [@chappell_pvc].
              (refinemaskj, basilcbf, [('out_mask', 'mask')]),
              (basilcbf, outputnode, [('out_cbfb', 'out_cbfb'),
                                 ('out_cbfpv', 'out_cbfpv'),
+                                ('out_cbfpvwm', 'out_cbfpvwm'),
                                 ('out_att', 'out_att')]),
              ])
     elif len(cbflist) > 0: 
@@ -949,11 +944,10 @@ also included correction for partial volume effects [@chappell_pvc].
 
         if scorescrub:
             workflow.__desc__ = workflow.__desc__ + """\
-CBF are susceptible to artifacts due to low signal to noise ratio  and  sensitivity to  motion, Structural Correlation
-based Outlier Rejection (SCORE) algothim was applied to the CBF to discard few extreme
-outliers [@score_dolui]. Furthermore,Structural Correlation with RobUst Bayesian (SCRUB)
-algorithms was applied to the CBF by iteratively reweighted  CBF  with structural tissues
-probalility maps [@scrub_dolui]. 
+CBF is susceptible to artifacts due to low signal to noise ratio  and  high sensitivity to  motion. 
+Therefore, the Structural Correlation with RobUst Bayesian (SCRUB) algorithm was applied to the CBF 
+timeseries to discard few extreme outlier volumes (if present) and iteratively reweight the mean CBF with 
+structural tissues probability maps[@score_dolui;@scrub_dolui]. 
 """         
             scorescrub1 = pe.Node(scorescrubCBF(in_thresh=0.7, in_wfun='huber'), mem_gb=mem_gb,
                          name='scorescrub', run_without_submitting=True)
@@ -976,5 +970,3 @@ probalility maps [@scrub_dolui].
                                   ('out_avgscore', 'out_avgscore'), ('out_scrub', 'out_scrub')]),
              ])
     return workflow
-
-

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import os
+from typing import Any
 import numpy as np
 import pandas as pd
 import nibabel as nb
@@ -233,7 +236,7 @@ class computeCBF(SimpleInterface):
             self.inputs.out_att = os.path.abspath(self._results['out_att'])
         self.inputs.out_cbf = os.path.abspath(self._results['out_cbf'])
         self.inputs.out_mean = os.path.abspath(self._results['out_mean'])
-        # we dont know why not zeros background $
+        ## we dont know why not zeros background $
         from nipype.interfaces.fsl import MultiImageMaths
         mat1 = MultiImageMaths()
         mat1.inputs.in_file = self.inputs.out_mean
@@ -270,7 +273,6 @@ def cbfcomputation(metadata, mask, m0file, cbffile, m0scale=1):
     #m0scale = metadata['M0']
     magstrength = metadata['MagneticFieldStrength']
     t1blood = (110*int(magstrength)+1316)/1000 # https://onlinelibrary.wiley.com/doi/pdf/10.1002/mrm.24550 
-    inverstiontime = np.add(tau, plds)
     #mask = nb.load(mask).get_fdata()
 
         
@@ -281,7 +283,7 @@ def cbfcomputation(metadata, mask, m0file, cbffile, m0scale=1):
     elif 'PASL' in labeltype:
         labeleff = 0.8
     else:
-        print('no labelelling effiecieny')
+        raise LabelingEfficiencyNotFound('No labeling efficiency')
     part_coeff = 0.9   # brain partition coefficient
 
 
@@ -290,6 +292,7 @@ def cbfcomputation(metadata, mask, m0file, cbffile, m0scale=1):
         pf1 = (6000*part_coeff)/(2*labeleff*t1blood*(1-np.exp(-(tau/t1blood))))
         perfusion_factor = pf1*np.exp(plds/t1blood)
     elif 'PASL' in labeltype:
+        inverstiontime = plds # As per BIDS: inversiontime for PASL == PostLabelingDelay
         pf1 = (6000*part_coeff)/(2*labeleff)
         perfusion_factor = (pf1*np.exp(inverstiontime/t1blood))/inverstiontime
     #perfusion_factor = np.array(perfusion_factor)
@@ -332,7 +335,7 @@ def cbfcomputation(metadata, mask, m0file, cbffile, m0scale=1):
             cbf[:, k] = np.divide(np.sum(pldx,axis=1),np.sum(plds))
 
     elif hasattr(perfusion_factor, '__len__') and len(cbf_data.shape) < 2 :
-        cbf_ts = np.zeros(cbf.shape,len(perfusion_factor))
+        cbf_ts = np.zeros(cbf_data.shape,len(perfusion_factor))
         for i in len(perfusion_factor):
             cbf_ts[:,i] = np.multiply(cbf1,perfusion_factor[i])
         cbf = np.divide(np.sum(cbf_ts,axis=1),np.sum(perfusion_factor))
@@ -718,11 +721,24 @@ class _BASILCBFInputSpec(FSLCommandInputSpec):
     mzero = File(exists=True, argstr=" -c %s ", desc='m0 scan', mandatory=False)
     m0scale = traits.Float(desc='calibration of asl', argstr=" --cgain %.2f ", mandatory=True)
     m0tr = traits.Float(desc='Mzero TR', argstr=" --tr %.2f ", mandatory=True,)
-    tis = traits.Str(desc='recovery time =plds+bolus', argstr=" --tis %s ", mandatory=True,)
+    tis = traits.Either(
+        traits.Float(),
+        traits.List(traits.Float()),
+        desc='recovery time =plds+bolus',
+        argstr=" --tis %s ",
+        mandatory=True,
+        sep=',',
+    )
     pcasl = traits.Bool(desc='label type:defualt is PASL', argstr=" --casl ",
                         mandatory=False, default_value=False)
-    bolus = traits.Float(desc='bolus or tau: label duration', argstr=" --bolus %.2f ",
-                         mandatory=True)
+    bolus = traits.Either(
+        traits.Float(),
+        traits.List(traits.Float()),
+        desc='bolus or tau: label duration',
+        argstr="--bolus %s",
+        mandatory=True,
+        sep=',',
+    )
     pvc = traits.Bool(desc='calibration of asl', mandatory=False, argstr=" --pvcorr ",
                       default_value=True)
     pvgm = File(exists=True, mandatory=False, desc='grey matter probablity matter ',
@@ -731,7 +747,8 @@ class _BASILCBFInputSpec(FSLCommandInputSpec):
                 argstr=" --pvwm %s ")
     out_basename = File(desc="base name of output files", argstr=" -o %s ", mandatory=True)
     out_cbfb = File(exists=False, desc='cbf with spatial correction')
-    out_cbfpv = File(exists=False, desc='cbf with spatial correction')
+    out_cbfpv = File(exists=False, desc='cbf with spatial partial volume correction')
+    out_cbfpvwm = File(exists=False, desc='cbf with spatial partial volume white matter correction')
     out_att = File(exists=False, desc='aretrial transist time')
     # environ=traits.Str('FSLOUTPUTTYPE': 'NIFTI_GZ'}
 
@@ -739,6 +756,7 @@ class _BASILCBFInputSpec(FSLCommandInputSpec):
 class _BASILCBFOutputSpec(TraitedSpec):
     out_cbfb = File(exists=False, desc='cbf with spatial correction')
     out_cbfpv = File(exists=False, desc='cbf with spatial correction')
+    out_cbfpvwm = File(exists=False, desc='cbf with spatial partial volume white matter correction')
     out_att = File(exists=False, desc='aretrial transist time')
 
 
@@ -778,8 +796,13 @@ class BASILCBF(FSLCommand):
         outputs["out_cbfpv"] = fname_presuffix(self.inputs.mask, suffix='_cbfbasilpv')
         copyfile(self.inputs.out_basename+'/native_space/pvcorr/perfusion_calib.nii.gz',
                  outputs["out_cbfpv"])
+
+        outputs["out_cbfpvwm"] = fname_presuffix(self.inputs.mask, suffix='_cbfbasilpvwm')
+        copyfile(self.inputs.out_basename+'/native_space/pvcorr/perfusion_wm_calib.nii.gz',
+                 outputs["out_cbfpvwm"])
         self.inputs.out_cbfb = os.path.abspath(outputs["out_cbfb"])
         self.inputs.out_cbfpv = os.path.abspath(outputs["out_cbfpv"])
+        self.inputs.out_cbfpvwm = os.path.abspath(outputs["out_cbfpvwm"])
         return outputs
 
 
@@ -1379,5 +1402,11 @@ def refine_ref_mask(t1w_mask,ref_asl_mask,
   
     return refined_mask
 
+def get_tis(metadata: dict[str, Any]):
+    if "CASL" in metadata["ArterialSpinLabelingType"]:
+        return np.add(metadata["PostLabelingDelay"], metadata["LabelingDuration"])
+    else:
+        return np.array(metadata["PostLabelingDelay"])
 
-
+class LabelingEfficiencyNotFound(Exception):
+    """LabelingEfficiency was not specified and no value could be derived."""

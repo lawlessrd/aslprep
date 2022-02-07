@@ -30,6 +30,7 @@ from ..utils.misc import apply_lut as _apply_bids_lut
 from .norm import init_anat_norm_wf
 from .outputs import init_anat_reports_wf, init_anat_derivatives_wf
 from .surfaces import init_surface_recon_wf
+from ..__about__ import __version__
 
 LOGGER = logging.getLogger('nipype.workflow')
 
@@ -181,12 +182,16 @@ def init_anat_preproc_wf(
     """
     workflow = Workflow(name=name)
     num_t1w = len(t1w)
-    desc = """Anatomical data preprocessing
+    if num_t1w > 1:
+        imagesize = 'images were'
+    else:
+        imagesize = 'image was'
+    desc = """
 
-: """
-    desc += """\
-A total of {num_t1w} T1-weighted (T1w) images were found within the input
-BIDS dataset.""".format(num_t1w=num_t1w)
+### Anatomical data preprocessing
+*sMRIPrep* {smriprep_ver} was used to process the anatomical data.
+A total of {num_t1w} T1-weighted (T1w) {imx} found within the input
+BIDS dataset. """.format(num_t1w=num_t1w,smriprep_ver=__version__,imx=imagesize)
 
     inputnode = pe.Node(
         niu.IdentityInterface(fields=['t1w', 't2w', 'roi', 'flair', 'subjects_dir', 'subject_id']),
@@ -249,28 +254,23 @@ Anatomical preprocessing was reused from previously existing derivative objects.
 
     # The workflow is not cached.
     desc += """
-All of them were corrected for intensity non-uniformity (INU)
+All  the T1-weighted (T1w) images were corrected for intensity non-uniformity (INU)
 """ if num_t1w > 1 else """\
 The T1-weighted (T1w) image was corrected for intensity non-uniformity (INU)
 """
     desc += """\
-with `N4BiasFieldCorrection` [@n4], distributed with ANTs {ants_ver} \
-[@ants, RRID:SCR_004757]"""
-    desc += '.\n' if num_t1w > 1 else ", and used as T1w-reference throughout the workflow.\n"
-
-    desc += """\
+with `N4BiasFieldCorrection` [@n4], which is distributed with *ANTs*  {ants_ver} \
+[@ants]. *sMRIPrep* uses this T1w reference throughout the workflow.
 The T1w-reference was then skull-stripped with a *Nipype* implementation of
-the `antsBrainExtraction.sh` workflow (from ANTs), using {skullstrip_tpl}
-as target template.
-Brain tissue segmentation of cerebrospinal fluid (CSF),
+the `antsBrainExtraction.sh` workflow  using {skullstrip_tpl}
+as  the target template. Brain tissue segmentation of cerebrospinal fluid (CSF),
 white-matter (WM) and gray-matter (GM) was performed on
-the brain-extracted T1w using `fast` [FSL {fsl_ver}, RRID:SCR_002823,
-@fsl_fast].
+the brain-extracted T1w reference image using *FSL*'s `FAST` [@fsl_fast].
 """
 
     workflow.__desc__ = desc.format(
         ants_ver=ANTsInfo.version() or '(version unknown)',
-        fsl_ver=fsl.FAST().version or '(version unknown)',
+        #fsl_ver=fsl.FAST().version or '(version unknown)',
         num_t1w=num_t1w,
         skullstrip_tpl=skull_strip_template.fullname,
     )

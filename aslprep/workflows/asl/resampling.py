@@ -263,17 +263,17 @@ def init_asl_std_trans_wf(
         (s.fullname, s.spec) for s in spaces.references if s.standard and s.dim == 3
     ]
 
-    if len(output_references) == 1:
-        workflow.__desc__ = """\
-The ASL and CBF dreivatives  were resampled into standard space,
-generating a *preprocessed ASL and computed CBF in {tpl} space*.
-""".format(tpl=output_references[0])
-    elif len(output_references) > 1:
-        workflow.__desc__ = """\
-The ASL and CBF dreivatives were resampled into several standard spaces,
-correspondingly generating the following *spatially-normalized,
-preprocessed ASL runs*: {tpl}.
-""".format(tpl=', '.join(output_references))
+    #if len(output_references) == 1:
+       # workflow.__desc__ = """\
+#The ASL and CBF dreivatives  were resampled into standard space,
+#generating a *preprocessed ASL and computed CBF in {tpl} space*.
+#""".format(tpl=output_references[0])
+    #elif len(output_references) > 1:
+        #workflow.__desc__ = """\
+#The ASL and CBF dreivatives were resampled into several standard spaces,
+#correspondingly generating the following *spatially-normalized,
+#preprocessed ASL runs*: {tpl}.
+#""".format(tpl=', '.join(output_references))
 
     inputnode = pe.Node(
         niu.IdentityInterface(fields=[
@@ -286,6 +286,7 @@ preprocessed ASL runs*: {tpl}.
             'scrub',
             'basil',
             'pv',
+            'pvwm',
             'asl_mask',
             'asl_split',
             'fieldwarp',
@@ -361,6 +362,9 @@ preprocessed ASL runs*: {tpl}.
         pv_to_std_transform = pe.Node(
           ApplyTransforms(interpolation="LanczosWindowedSinc", float=True,input_image_type=3),
           name='pv_to_std_transform', mem_gb=mem_gb * 3 * omp_nthreads, n_procs=omp_nthreads)
+        pvwm_to_std_transform = pe.Node(
+          ApplyTransforms(interpolation="LanczosWindowedSinc", float=True,input_image_type=3),
+          name='pv_to_std_transformwm', mem_gb=mem_gb * 3 * omp_nthreads, n_procs=omp_nthreads)
         att_to_std_transform = pe.Node(
           ApplyTransforms(interpolation="LanczosWindowedSinc", float=True,input_image_type=3),
           name='att_to_std_transform', mem_gb=mem_gb * 3 * omp_nthreads, n_procs=omp_nthreads)
@@ -412,7 +416,7 @@ preprocessed ASL runs*: {tpl}.
     if scorescrub:
         output_names = output_names +['score_std','avgscore_std','scrub_std']
     if basil:
-        output_names = output_names + ['basil_std', 'pv_std','att_std']
+        output_names = output_names + ['basil_std', 'pv_std','att_std', 'pvwm_std']
       
     poutputnode = pe.Node(niu.IdentityInterface(fields=output_names),
                           name='poutputnode')
@@ -462,6 +466,11 @@ preprocessed ASL runs*: {tpl}.
         (gen_ref, pv_to_std_transform, [('out_file', 'reference_image')]),
         (inputnode, pv_to_std_transform, [('pv', 'input_image')]),
         (pv_to_std_transform, poutputnode, [('output_image', 'pv_std')]),
+
+        (mask_merge_tfms, pvwm_to_std_transform, [('out', 'transforms')]),
+        (gen_ref, pvwm_to_std_transform, [('out_file', 'reference_image')]),
+        (inputnode, pvwm_to_std_transform, [('pvwm', 'input_image')]),
+        (pvwm_to_std_transform, poutputnode, [('output_image', 'pvwm_std')]),
 
         (mask_merge_tfms, att_to_std_transform, [('out', 'transforms')]),
         (gen_ref, att_to_std_transform, [('out_file', 'reference_image')]),
@@ -549,16 +558,11 @@ def init_asl_preproc_trans_wf(mem_gb, omp_nthreads,
     from ...niworkflows.interfaces.nilearn import Merge
 
     workflow = Workflow(name=name)
-    workflow.__desc__ = """\
-The asl time-series (including slice-timing correction when applied)
-were resampled onto their original, native space by applying
-{transforms}.
-These resampled asl time-series will be referred to as *preprocessed
-asl in original space*, or just *preprocessed asl*.
-""".format(transforms="""\
-a single, composite transform to correct for head-motion and
-susceptibility distortions""" if use_fieldwarp else """\
-the transforms to correct for head-motion""")
+    # workflow.__desc__ = """\
+    #The ASL timeseries were resampled onto their original, 
+    #native space by applying the transforms to correct for head-motion. 
+    #These resampled ASL timeseries are referred to as preprocessed ASL
+    #"""
 
     inputnode = pe.Node(niu.IdentityInterface(fields=[
         'name_source', 'asl_file', 'asl_mask', 'hmc_xforms', 'fieldwarp']),

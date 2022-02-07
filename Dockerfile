@@ -1,5 +1,5 @@
 # Use Ubuntu 16.04 LTS
-FROM nvidia/cuda:9.1-runtime-ubuntu16.04
+FROM ubuntu:xenial-20200706
 
 # Pre-cache neurodebian key
 COPY docker/files/neurodebian.gpg /usr/local/etc/neurodebian.gpg
@@ -147,14 +147,12 @@ RUN mkdir /opt/cmake \
     && make -j2 \
     && cd ANTS-build \
     && make install \
-    && rm -rf /tmp/ants \
+    && rm -rf /tmp/ants 
+    
 # Installing SVGO
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
-RUN apt-get install -y nodejs
-RUN npm install -g svgo
 
-# Installing bids-validator
-RUN npm install -g bids-validator@1.6.2
+
+
 
 ENV C3DPATH="/opt/convert3d-nightly" \
     PATH="/opt/convert3d-nightly/bin:$PATH"
@@ -183,6 +181,17 @@ ENV AFNI_INSTALLDIR=/usr/lib/afni \
     MRTRIX_NTHREADS=1 \
     IS_DOCKER_8395080871=1
 
+#RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+#RUN apt-get install -y nodejs
+##RUN npm install -g npm
+#RUN npm install -g svgo
+RUN curl -sL https://deb.nodesource.com/setup_12.x  | bash -
+RUN apt-get -y install nodejs
+RUN npm install -g svgo
+
+# Installing bids-validator
+RUN npm install -g bids-validator@1.8.4
+
 RUN conda install -y python=3.7.4 \
                      pip=19.1 \
                      mkl=2018.0.3 \
@@ -201,6 +210,14 @@ RUN conda install -y python=3.7.4 \
     chmod +x /usr/local/miniconda/bin/*; sync && \
     conda build purge-all; sync && \
     conda clean -tipsy && sync
+
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
+RUN apt-get install -y nodejs
+
+RUN npm install -g svgo
+
+# Installing bids-validator
+RUN npm install -g bids-validator@1.8.4 
 
 # Unless otherwise specified each process should only use one thread - nipype
 # will handle parallelization
@@ -225,11 +242,7 @@ RUN pip install --no-cache-dir "$( grep templateflow aslprep-setup.cfg | xargs )
                          desc='brain', extension=['.nii', '.nii.gz']); \
                tfapi.get('MNI152NLin2009cAsym', atlas=None, resolution=[1, 2],\
                                         extension=['.nii', '.nii.gz']); \
-               tfapi.get('OASIS30ANTs', extension=['.nii', '.nii.gz']); \
-               tfapi.get('fsaverage', density='164k', desc='std', suffix='sphere'); \
-               tfapi.get('fsaverage', density='164k', desc='vaavg', suffix='midthickness'); \
-               tfapi.get('fsLR', density='32k'); \
-               tfapi.get('MNI152NLin6Asym', resolution=2, atlas='HCP', suffix='dseg')" && \
+               tfapi.get('OASIS30ANTs', extension=['.nii', '.nii.gz'])" && \
     rm aslprep-setup.cfg && \
     find $HOME/.cache/templateflow -type d -exec chmod go=u {} + && \
     find $HOME/.cache/templateflow -type f -exec chmod go=u {} +
@@ -251,11 +264,12 @@ RUN find /opt/xnatwrapper -type d -exec chmod 755 {} \;
 # Installing ASLPREP
 COPY . /src/aslprep
 
-ARG VERSION=0.2.7
+#ARG VERSION
+
 # Force static versioning within container
-RUN echo "${VERSION}" > /src/aslprep/aslprep/VERSION && \
-    echo "include aslprep/VERSION" >> /src/aslprep/MANIFEST.in && \
-    pip install --no-cache-dir "/src/aslprep[all]"
+#RUN echo "${VERSION}" > /src/aslprep/aslprep/VERSION && \
+    #echo "include aslprep/VERSION" >> /src/aslprep/MANIFEST.in && \
+RUN pip install --no-cache-dir "/src/aslprep[all]"
 
 RUN install -m 0755 \
     /src/aslprep/scripts/generate_reference_mask.py \
