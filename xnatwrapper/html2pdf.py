@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
-import os,glob,sys,getopt
+import glob,sys,getopt
 from weasyprint import HTML,CSS
 
 
@@ -41,18 +41,8 @@ def main(argv):
 		html = ''
 		for i in parsed_data:
 			html += i
-		# save html string to temporary file for conversion
-		tmp_file = open("tmp_html.html","w")
-		tmp_file.write(html)
-		tmp_file.close()
 		#Apply html to pdf conversion
-		HTML('tmp_html.html').write_pdf(x.replace('.html','.pdf'),stylesheets=[CSS(string='body { font-family: !important }')])
-		#delete temporary file
-		if os.path.exists("tmp_html.html"):
-			os.remove("tmp_html.html")
-		else:
-			print("The file does not exist.") 
-
+		HTML(string=html).write_pdf(x.replace('.html','.pdf'),stylesheets=[CSS(string='body { font-family: !important }')])
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
