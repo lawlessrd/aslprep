@@ -8,12 +8,12 @@ singularity run \
 --bind $(pwd -P)/EmotionBrain_BIDS:/data:ro \
 --bind $(pwd -P)/OUTPUTS:/out:rw \
 --bind $(pwd -P)/license.txt:/license/license.txt \
-aslprep_v2.simg \
+aslprep_v0.2.8.simg \
 --bidsdir $(pwd -P)/EmotionBrain_BIDS \
 --outdir $(pwd -P)/OUTPUTS \
 --m0scan pCASL_M0 \
 --aslscan pCASL \
---examcard $(pwd -P)/EmotionBrain_BIDS/Kaczkurkin_20210201.txt \
+--examcard $(pwd -P)/Kaczkurkin_20210201.txt \
 --fs_license $(pwd -P)/license.txt 
 
 
