@@ -9,6 +9,7 @@ Outputs:
 
 
 '''
+from __future__ import print_function
 import os
 import csv
 import sys, getopt
@@ -20,16 +21,16 @@ def main(argv):
 	try:
 		opts, args = getopt.getopt(argv, "hb:",["bids="])
 	except getopt.GetoptError:
-		print ('create_tsv.py -b <folder>')
+		print('create_tsv.py -b <folder>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print ('create_tsv.py -b <folder>')
+			print('create_tsv.py -b <folder>')
 			sys.exit()
 		elif opt in ("-b", "--bids"):
 			bids = arg
 
-	print ('BIDS Folder: ', bids)
+	print('BIDS Folder: ', bids)
 
 	asl_file = glob.glob(bids+'/sub-*/ses-*/perf/*_asl.nii.gz')
 

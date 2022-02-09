@@ -44,9 +44,8 @@ m0scan metadata fields:
 Units of time should always be seconds.
 
 '''
-
+from __future__ import print_function
 import json
-import os
 import re
 import sys, getopt
 import glob

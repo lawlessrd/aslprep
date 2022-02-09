@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
+from __future__ import print_function
 import glob,sys,getopt
 from weasyprint import HTML,CSS
 
@@ -10,16 +11,16 @@ def main(argv):
 	try:
 		opts, args = getopt.getopt(argv, "ho:",["out_dir="])
 	except getopt.GetoptError:
-		print ('html2pdf.py -o <folder>')
+		print('html2pdf.py -o <folder>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print ('html2pdf.py -o <folder>')
+			print('html2pdf.py -o <folder>')
 			sys.exit()
 		elif opt in ("-o", "--out_dir"):
 			out_dir = arg
 
-	print ('Output Folder: ', out_dir)
+	print('Output Folder: ', out_dir)
 
 	html_out = glob.glob(out_dir + '/aslprep/sub-*.html')
 

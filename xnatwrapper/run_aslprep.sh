@@ -42,7 +42,7 @@ done
 /opt/xnatwrapper/create_tsv.py -b ${bidsdir}
 
 #Run MRIQC
-aslprep --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level} --skip_bids_validation
+aslprep --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level}
 
 #Run py scripts to convert outputs
 /opt/xnatwrapper/html2pdf.py -o ${outdir}
