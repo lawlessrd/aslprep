@@ -14,7 +14,10 @@ aslprep_v0.2.8.simg \
 --m0scan pCASL_M0 \
 --aslscan pCASL \
 --examcard $(pwd -P)/Kaczkurkin_20210201.txt \
---fs_license $(pwd -P)/license.txt 
+--fs_license $(pwd -P)/license.txt \
+--project 'test_project' \
+--subject 'test_subject' \
+--session 'test_session'
 
 
 # Docker
@@ -29,4 +32,7 @@ lawlessrd/aslprep:0.2.7 \
 --aslscan pCASL \
 --examcard $(pwd -P)/EmotionBrain_BIDS/Kaczkurkin_20210201.txt \
 --fs_license $(pwd -P)/license.txt 
+--project 'test_project' \
+--subject 'test_subject' \
+--session 'test_session'
 

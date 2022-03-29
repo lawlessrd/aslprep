@@ -13,6 +13,9 @@ export m0scan=NO_M0SCAN
 export aslscan=NO_ASLSCAN
 export aslsource=NO_ASLSOURCE
 export examcard=NO_EXAMCARD
+export project=NO_PROJECT
+export subject=NO_SUBJECT
+export session=NO_SESSIONS
 
 # Parse options
 while [[ $# -gt 0 ]]; do
@@ -30,6 +33,12 @@ while [[ $# -gt 0 ]]; do
       export examcard="${2}"; shift; shift ;;
     --fs_license)
       export fs_license="${2}"; shift; shift ;;
+    --project)
+      export project="${2}"; shift; shift ;;
+    --subject)
+      export subject="${2}"; shift; shift ;;
+    --session)
+      export session="${2}"; shift; shift ;;
     *)
       echo Unknown input "${1}"; shift ;;
   esac
@@ -45,4 +54,4 @@ done
 aslprep --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level}
 
 #Run py scripts to convert outputs
-/opt/xnatwrapper/html2pdf.py -o ${outdir}
+/opt/xnatwrapper/html2pdf.py -o ${outdir} -p ${project} -s ${subject} -c ${session}
