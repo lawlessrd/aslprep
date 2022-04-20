@@ -9,22 +9,16 @@ from weasyprint import HTML,CSS
 def main(argv):
 	out_dir = ''
 	try:
-		opts, args = getopt.getopt(argv, "ho:p:s:c",["out_dir=","project=","subject=","session="])
+		opts, args = getopt.getopt(argv, "ho:",["out_dir="])
 	except getopt.GetoptError:
-		print('html2pdf.py -o <folder> --project <project> --subject <subject> --session <session>')
+		print('html2pdf.py -o <folder>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print('html2pdf.py -o <folder> --project <project> --subject <subject> --session <session>')
+			print('html2pdf.py -o <folder>')
 			sys.exit()
 		elif opt in ("-o", "--out_dir"):
 			out_dir = arg
-		elif opt in ("-p", "--project"):
-			project = arg
-		elif opt in ("-s", "--subject"):
-			subject = arg
-		elif opt in ("-c", "--session"):
-			session = arg
 	
 	print('Output Folder: ', out_dir)
 
@@ -49,7 +43,7 @@ def main(argv):
 		for i in parsed_data:
 			html += i
 		#Apply html to pdf conversion
-		HTML(string=html).write_pdf(project + '_' + subject + '_' + session +'_aslprep_QA.pdf',stylesheets=[CSS(string='body { font-family: !important }')])
+		HTML(string=html).write_pdf(out_dir + '/ASLprep_QA.pdf',stylesheets=[CSS(string='body { font-family: !important }')])
 
 if __name__ == '__main__':
 	main(sys.argv[1:])

@@ -133,8 +133,6 @@ def main(argv):
 	with open('SeriesDescription.json','r') as infile:
 		scannames = json.load(infile)
 
-
-
 	for scan in scannames.values():
 
 		scan_dict[scan] = {}
