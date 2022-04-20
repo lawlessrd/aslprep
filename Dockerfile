@@ -18,7 +18,6 @@ RUN apt-get update && \
                     pkg-config \
                     bc \
                     dc \
-                    dcm2niix \
                     file \
                     libopenblas-base \
                     libfontconfig1 \
@@ -253,6 +252,8 @@ RUN pip install --no-cache-dir "$( grep templateflow aslprep-setup.cfg | xargs )
 
 #Install fpdf, generate machine ID
 RUN pip install --no-cache-dir fpdf weasyprint==52.5 glob2 nibabel pydicom
+
+RUN conda install -c conda-forge dcm2niix
 
 #Copy xnatwrapper
 COPY xnatwrapper /opt/xnatwrapper
