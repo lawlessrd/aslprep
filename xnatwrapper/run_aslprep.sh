@@ -2,11 +2,11 @@
 
 ### Script for aslprep singularity container
 # Dylan Lawless
-# Usage: run_aslprep: [--bidsdir] [--outdir] [--m0scan] [--aslscan] [--aslsource] [--examcard] [--fs_license]
+# Usage: run_aslprep: [--indir] [--outdir] [--m0scan] [--aslscan] [--aslsource] [--examcard] [--fs_license]
 
 
 # Initialize defaults
-export bidsdir=NO_BIDS
+export indir=NO_INDIR
 export outdir=NO_OUTDIR
 export level=participant
 export m0scan=NO_M0SCAN
@@ -21,14 +21,16 @@ export session=NO_SESSIONS
 while [[ $# -gt 0 ]]; do
   key="${1}"
   case $key in
-    --bidsdir)
-      export bidsdir="${2}"; shift; shift ;;
+    --indir)
+      export indir="${2}"; shift; shift ;;
     --outdir)
       export outdir="${2}"; shift; shift ;;
     --m0scan)
       export m0scan="${2}"; shift; shift ;;
     --aslscan)
       export aslscan="${2}"; shift; shift ;;
+    --sourcescan)
+      export sourcescan="${2}"; shift; shift ;;
     --examcard)
       export examcard="${2}"; shift; shift ;;
     --fs_license)
@@ -44,13 +46,21 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-#Get necessary data form exam card and write to json sidecar
-/opt/xnatwrapper/examcard2json.py -i ${examcard} -s ${m0scan},${aslscan} -b ${bidsdir} 
 
-#Create tsv file
+# Format BIDS directory and convert to nii
+# Save Series Description to json
+/opt/xnatwrapper/organize_data.py -i $indir -a $aslscan -m $m0scan -s $sourcescan
+
+# Set BIDS directory
+bidsdir=$indir/BIDS
+
+#Get necessary data form examcard and write to json sidecar
+/opt/xnatwrapper/examcard2json.py -i ${examcard} -b ${bidsdir} 
+
+#Create ASL context tsv file
 /opt/xnatwrapper/create_tsv.py -b ${bidsdir}
 
-#Run MRIQC
+#Run aslprep
 aslprep --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level}
 
 #Run py scripts to convert outputs

@@ -44,6 +44,11 @@ m0scan metadata fields:
 Units of time should always be seconds.
 
 '''
+
+### To do:
+# loan in json with scan names instead of using inputs
+# make sure script can find examcard
+
 from __future__ import print_function
 import json
 import re
@@ -107,27 +112,30 @@ def main(argv):
 	scannames = ''
 	bids = ''
 	try:
-		opts, args = getopt.getopt(argv, "hi:s:b:",["input=","scans=","bids="])
+		opts, args = getopt.getopt(argv, "hi:b:",["input=","bids="])
 	except getopt.GetoptError:
-		print('examcard2json.py -i <input_examcard.txt> -s <scan1,scan2> -b <folder>')
+		print('examcard2json.py -i <input_examcard.txt> -b <folder>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print('examcard2json.py -i <input_examcard.txt> -s <scan1,scan2> -b <folder>')
+			print('examcard2json.py -i <input_examcard.txt> -b <folder>')
 			sys.exit()
 		elif opt in ("-i", "--input"):
 			inputfile = arg
-		elif opt in ("-s", "--scans"):
-			scannames = arg.split(',')
 		elif opt in ("-b", "--bids"):
 			bids = arg
 
 
 	#Initialize dictionaries
 	scan_dict = {}
-	#Get scans from start of file
+	
+	#Get scans from SeriesDescription.json
+	with open('SeriesDescription.json','r') as infile:
+		scannames = json.load(infile)
 
-	for scan in scannames:
+
+
+	for scan in scannames.values():
 
 		scan_dict[scan] = {}
 
@@ -221,6 +229,8 @@ def main(argv):
 				if asl_type == 'pCASL' or 'CASL':
 					# Parse exam card for background suppression
 					search_tmp = search_string_in_file(inputfile,'label duration',start_line)
+					if not search_tmp:
+						search_tmp = search_string_in_file(inputfile,'EX_FLL_casl_dur',start_line)
 					tmp = search_tmp[0][1].split(':')
 					label_duration = int(tmp[-1].strip())/1000
 					print('\tLabeling duration:',label_duration, 'sec')
@@ -242,8 +252,5 @@ def main(argv):
 			sys.exit()
 
 
-# To do:
-# add check to see if we need to convert the exam card
-# dcm2niix
 if __name__ == '__main__':
 	main(sys.argv[1:])

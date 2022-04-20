@@ -5,34 +5,16 @@ singularity run \
 --cleanenv \
 --contain \
 --home $(pwd -P) \
---bind $(pwd -P)/EmotionBrain_BIDS:/data:ro \
+--bind $(pwd -P)/LANDMAN_UPGRAD:/data:ro \
 --bind $(pwd -P)/OUTPUTS:/out:rw \
 --bind $(pwd -P)/license.txt:/license/license.txt \
-aslprep_v0.2.8.simg \
---bidsdir $(pwd -P)/EmotionBrain_BIDS \
+aslprep.simg \
+--bidsdir $(pwd -P)/LANDMAN_UPGRAD \
 --outdir $(pwd -P)/OUTPUTS \
---m0scan pCASL_M0 \
---aslscan pCASL \
---examcard $(pwd -P)/Kaczkurkin_20210201.txt \
+--m0scan 'ASL_M0 Ref' \
+--aslscan 'ASL_BASELINE PGPP' \
+--examcard $(pwd -P)/Landman_EC.txt \
 --fs_license $(pwd -P)/license.txt \
 --project 'test_project' \
 --subject 'test_subject' \
 --session 'test_session'
-
-
-# Docker
-docker run -ti -m 12GB --rm \
--v $(pwd -P)/EmotionBrain_BIDS:/data:ro \
--v $(pwd -P)/OUTPUTS:/out:rw \
--v $(pwd -P)/license.txt:/license/license.txt \
-lawlessrd/aslprep:0.2.7 \
---bidsdir $(pwd -P)/EmotionBrain_BIDS \
---outdir $(pwd -P)/OUTPUTS \
---m0scan pCASL_M0 \
---aslscan pCASL \
---examcard $(pwd -P)/EmotionBrain_BIDS/Kaczkurkin_20210201.txt \
---fs_license $(pwd -P)/license.txt 
---project 'test_project' \
---subject 'test_subject' \
---session 'test_session'
-

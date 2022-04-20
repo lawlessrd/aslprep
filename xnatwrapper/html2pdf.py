@@ -19,12 +19,12 @@ def main(argv):
 			sys.exit()
 		elif opt in ("-o", "--out_dir"):
 			out_dir = arg
-        elif opt in ("-p", "--project"):
-            project = arg
-        elif opt in ("-s", "--subject"):
-            subject = arg
-        elif opt in ("-c", "--session"):
-            session = arg
+		elif opt in ("-p", "--project"):
+			project = arg
+		elif opt in ("-s", "--subject"):
+			subject = arg
+		elif opt in ("-c", "--session"):
+			session = arg
 	
 	print('Output Folder: ', out_dir)
 
