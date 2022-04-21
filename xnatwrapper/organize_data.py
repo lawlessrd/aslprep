@@ -31,9 +31,6 @@ def main(argv):
 		elif opt in ("-s", "--source"):
 			source = arg
 
-	# find examcard
-	examcard=glob.glob(indir + '/*.txt')
-	
 	# set T1
 	t1w=indir + '/T1.dcm'
 
@@ -47,7 +44,6 @@ def main(argv):
 	ds_asl = dcmread(asl)
 	ds_m0 = dcmread(m0)
 	ds_t1w = dcmread(t1w)
-	ds_source = dcmread(source)
 
 	# pull scan name from dicom header
 	scanname = {}
@@ -113,7 +109,7 @@ def main(argv):
   	  "Author": "No Author defined on XNAT"
 	  }
 	
-	with open('BIDS/dataset_description.json','w') as outfile:
+	with open(indir + '/BIDS/dataset_description.json','w') as outfile:
 		json.dump(dataset_description,outfile)
 
 

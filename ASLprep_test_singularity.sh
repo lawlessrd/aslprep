@@ -9,7 +9,7 @@ singularity run \
 --bind $(pwd -P)/OUTPUTS:/out:rw \
 --bind $(pwd -P)/license.txt:/license/license.txt \
 aslprep.simg \
---indir $(pwd -P)/LANDMAN_UPGRAD \
+--indir $(pwd -P)/INPUTS \
 --outdir $(pwd -P)/OUTPUTS \
 --m0scan $(pwd -P)/INPUTS/pCASL_M0.dcm \
 --aslscan $(pwd -P)/INPUTS/pCASL.dcm \
