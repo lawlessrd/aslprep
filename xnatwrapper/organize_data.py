@@ -30,7 +30,7 @@ def main(argv):
 			m0 = arg
 		elif opt in ("-s", "--source"):
 			source = arg
-
+	
 	# set T1
 	t1w=indir + '/T1.dcm'
 
@@ -44,6 +44,7 @@ def main(argv):
 	ds_asl = dcmread(asl)
 	ds_m0 = dcmread(m0)
 	ds_t1w = dcmread(t1w)
+	ds_source = dcmread(source)
 
 	# pull scan name from dicom header
 	scanname = {}
@@ -73,9 +74,9 @@ def main(argv):
 
 	# rename nii/json files to match bids formatting
 	
-	ds_t1w.SeriesDescription = ds_t1w.SeriesDescription.replace(" ","").replace('/', "").replace(":", "")
-	ds_asl.SeriesDescription = ds_asl.SeriesDescription.replace(" ","").replace('/', "").replace(":", "")
-	ds_m0.SeriesDescription = ds_m0.SeriesDescription.replace(" ","").replace('/', "").replace(":", "")
+	ds_t1w.SeriesDescription = ds_t1w.SeriesDescription.replace(" ","").replace('/', "").replace(":", "").replace("_", "")
+	ds_asl.SeriesDescription = ds_asl.SeriesDescription.replace(" ","").replace('/', "").replace(":", "").replace("_", "")
+	ds_m0.SeriesDescription = ds_m0.SeriesDescription.replace(" ","").replace('/', "").replace(":", "").replace("_", "")
 
 	anat_rename = 'sub-01_ses-01_acq-' + ds_t1w.SeriesDescription + '_run-' + str(ds_t1w.SeriesNumber) + '_T1w'
 	for file in glob.glob(indir + '/BIDS/sub-01/ses-01/anat/*'):
@@ -85,7 +86,7 @@ def main(argv):
 			os.system('mv ' + file + ' ' + os.path.dirname(file) + '/' + anat_rename + '.nii')
 			os.system('gzip ' + os.path.dirname(file) + '/' + anat_rename + '.nii')
 
-	asl_rename = 'sub-01_ses-01_acq-' + ds_asl.SeriesDescription + '_run-' + str(ds_asl.SeriesNumber) + '_asl'
+	asl_rename = 'sub-01_ses-01_acq-' + ds_asl.SeriesDescription + '_run-' + str(ds_source.SeriesNumber) + '_asl'
 	m0_rename = 'sub-01_ses-01_acq-' + ds_m0.SeriesDescription + '_run-' + str(ds_m0.SeriesNumber) + '_m0scan'
 	for file in glob.glob(indir + '/BIDS/sub-01/ses-01/perf/*'):
 		if 'M0' in file:
