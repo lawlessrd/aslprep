@@ -74,11 +74,11 @@ def main(argv):
 
 	# rename nii/json files to match bids formatting
 	
-	ds_t1w.SeriesDescription = ds_t1w.SeriesDescription.replace(" ","").replace('/', "").replace(":", "").replace("_", "")
-	ds_asl.SeriesDescription = ds_asl.SeriesDescription.replace(" ","").replace('/', "").replace(":", "").replace("_", "")
-	ds_m0.SeriesDescription = ds_m0.SeriesDescription.replace(" ","").replace('/', "").replace(":", "").replace("_", "")
+	#ds_t1w.SeriesDescription = ds_t1w.SeriesDescription.replace(" ","").replace('/', "").replace(":", "").replace("_", "")
+	#ds_asl.SeriesDescription = ds_asl.SeriesDescription.replace(" ","").replace('/', "").replace(":", "").replace("_", "")
+	#ds_m0.SeriesDescription = ds_m0.SeriesDescription.replace(" ","").replace('/', "").replace(":", "").replace("_", "")
 
-	anat_rename = 'sub-01_ses-01_acq-' + ds_t1w.SeriesDescription + '_run-' + str(ds_t1w.SeriesNumber) + '_T1w'
+	anat_rename = 'sub-01_ses-01_T1w'
 	for file in glob.glob(indir + '/BIDS/sub-01/ses-01/anat/*'):
 		if file.endswith('.json'):
 			os.system('mv ' + file + ' ' + os.path.dirname(file) + '/' + anat_rename + '.json')
@@ -86,8 +86,8 @@ def main(argv):
 			os.system('mv ' + file + ' ' + os.path.dirname(file) + '/' + anat_rename + '.nii')
 			os.system('gzip ' + os.path.dirname(file) + '/' + anat_rename + '.nii')
 
-	asl_rename = 'sub-01_ses-01_acq-' + ds_asl.SeriesDescription + '_run-' + str(ds_source.SeriesNumber) + '_asl'
-	m0_rename = 'sub-01_ses-01_acq-' + ds_m0.SeriesDescription + '_run-' + str(ds_m0.SeriesNumber) + '_m0scan'
+	asl_rename = 'sub-01_ses-01_asl'
+	m0_rename = 'sub-01_ses-01__m0scan'
 	for file in glob.glob(indir + '/BIDS/sub-01/ses-01/perf/*'):
 		if 'M0' in file:
 			if file.endswith('.json'):
