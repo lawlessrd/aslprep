@@ -93,7 +93,7 @@ def main(argv):
 	asl_rename = 'sub-01_ses-01_asl'
 	m0_rename = 'sub-01_ses-01_m0scan'
 	for file in glob.glob(indir + '/BIDS/sub-01/ses-01/perf/*'):
-		if 'M0' or 'm0' in file:
+		if 'M0' in file or 'm0' in file:
 			if file.endswith('.json'):
 				os.system('mv ' + file + ' ' + os.path.dirname(file) + '/' + m0_rename + '.json')
 			else:
