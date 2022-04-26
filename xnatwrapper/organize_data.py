@@ -32,7 +32,7 @@ def main(argv):
 			source = arg
 	
 	# set T1
-	t1w=indir + '/T1.dcm'
+	t1w=indir + '/t1.dcm'
 
 	# check if file paths are absolute
 	if os.path.isabs(asl) == False:
