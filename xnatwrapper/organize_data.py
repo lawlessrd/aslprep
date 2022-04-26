@@ -32,7 +32,11 @@ def main(argv):
 			source = arg
 	
 	# set T1
-	t1w=indir + '/t1.dcm'
+	t1w=glob.glob(indir + '/t1.dcm')
+	if not t1w:
+		t1w=glob.glob(indir + '/T1.dcm')
+
+	t1w=t1w[0]
 
 	# check if file paths are absolute
 	if os.path.isabs(asl) == False:
