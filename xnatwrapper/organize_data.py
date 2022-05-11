@@ -56,7 +56,7 @@ def main(argv):
 	scanname['m0'] = ds_m0.SeriesDescription
 
 	# write scanname dict to json
-	with open('SeriesDescription.json','w') as outfile:
+	with open(indir + '/SeriesDescription.json','w') as outfile:
 		json.dump(scanname,outfile)
 
 	# move scans to BIDS directories
