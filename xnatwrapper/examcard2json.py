@@ -130,7 +130,7 @@ def main(argv):
 	scan_dict = {}
 	
 	#Get scans from SeriesDescription.json
-	with open('SeriesDescription.json','r') as infile:
+	with open(indir + '/SeriesDescription.json','r') as infile:
 		scannames = json.load(infile)
 
 	for scan in scannames.values():
