@@ -108,22 +108,25 @@ def modify_json(json_file, s_dict):
 		sys.exit()
 
 def main(argv):
-	inputfile = ''
+	indir = ''
 	scannames = ''
 	bids = ''
+	inputfile= ''
 	try:
-		opts, args = getopt.getopt(argv, "hi:b:",["input=","bids="])
+		opts, args = getopt.getopt(argv, "hi:b:e:",["input=","bids=","examcard="])
 	except getopt.GetoptError:
-		print('examcard2json.py -i <input_examcard.txt> -b <folder>')
+		print('examcard2json.py -i <indir> -b <folder> -e <examcard.txt>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print('examcard2json.py -i <input_examcard.txt> -b <folder>')
+			print('examcard2json.py -i <indir> -b <folder> -e <examcard.txt>')
 			sys.exit()
 		elif opt in ("-i", "--input"):
-			inputfile = arg
+			indir = arg
 		elif opt in ("-b", "--bids"):
 			bids = arg
+		elif opt in ("-e","--examcard"):
+			inputfile = arg
 
 
 	#Initialize dictionaries

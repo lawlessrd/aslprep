@@ -46,7 +46,7 @@ done
 bidsdir=$indir/BIDS
 
 #Get necessary data form examcard and write to json sidecar
-/opt/xnatwrapper/examcard2json.py -i ${examcard} -b ${bidsdir} 
+/opt/xnatwrapper/examcard2json.py -i ${indir} -b ${bidsdir} -e ${examcard}
 
 #Create ASL context tsv file
 /opt/xnatwrapper/create_tsv.py -b ${bidsdir}
