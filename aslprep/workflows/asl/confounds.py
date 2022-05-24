@@ -90,6 +90,8 @@ def init_asl_confs_wf(
         asl series mask
     movpar_file
         SPM-formatted motion parameters file
+    rmsd_file
+        Framewise displacement as measured by ``fsl_motion_outliers``. 
     skip_vols
         number of non steady state volumes
     t1w_mask
@@ -116,8 +118,8 @@ Several confounding timeseries were calculated, including both framewise displac
 in-scanner motion as the mean framewise displacement and relative root-mean square displacement.
 """
     inputnode = pe.Node(niu.IdentityInterface(
-        fields=['asl', 'asl_mask', 'movpar_file', 'skip_vols',
-                't1w_mask', 't1w_tpms', 't1_asl_xform']),
+        fields=['asl', 'asl_mask', 'movpar_file', 'rmsd_file',
+                'skip_vols', 't1w_mask', 't1w_tpms', 't1_asl_xform']),
         name='inputnode')
     outputnode = pe.Node(niu.IdentityInterface(
         fields=['confounds_file', 'confounds_metadata']),
@@ -145,6 +147,11 @@ in-scanner motion as the mean framewise displacement and relative root-mean squa
     add_motion_headers = pe.Node(
         AddTSVHeader(columns=["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]),
         name="add_motion_headers", mem_gb=0.01, run_without_submitting=True)
+    add_rmsd_header = pe.Node(
+        AddTSVHeader(columns=["rmsd"]),
+        name="add_rmsd_header",
+        mem_gb=0.01,
+        run_without_submitting=True)
     concat = pe.Node(GatherConfounds(), name="concat", mem_gb=0.01, run_without_submitting=True)
 
 
@@ -152,21 +159,21 @@ in-scanner motion as the mean framewise displacement and relative root-mean squa
     # Expand model to include derivatives and quadratics
 
     workflow.connect([
+
         # connect inputnode to each non-anatomical confound node
         (inputnode, dvars, [('asl', 'in_file'),
                             ('asl_mask', 'in_mask')]),
         (inputnode, fdisp, [('movpar_file', 'in_file')]),
         # Collate computed confounds together
-        (inputnode, add_motion_headers, [('movpar_file', 'in_file')]),
-        (dvars, add_dvars_header, [('out_nstd', 'in_file')]),
-        (dvars, add_std_dvars_header, [('out_std', 'in_file')]),
-        (fdisp, concat, [('out_file', 'fd')]),
-        (add_motion_headers, concat, [('out_file', 'motion')]),
-        (add_dvars_header, concat, [('out_file', 'dvars')]),
-        (add_std_dvars_header, concat, [('out_file', 'std_dvars')]),
-
-        # Expand the model with derivatives, quadratics, and spikes
-
+        (inputnode, add_motion_headers, [("movpar_file", "in_file")]),
+        (inputnode, add_rmsd_header, [("rmsd_file", "in_file")]),
+        (dvars, add_dvars_header, [("out_nstd", "in_file")]),
+        (dvars, add_std_dvars_header, [("out_std", "in_file")]),
+        (fdisp, concat, [("out_file", "fd")]),
+        (add_motion_headers, concat, [("out_file", "motion")]),
+        (add_rmsd_header, concat, [("out_file", "rmsd")]),
+        (add_dvars_header, concat, [("out_file", "dvars")]),
+        (add_std_dvars_header, concat, [("out_file", "std_dvars")]),
         # Set outputs
         (concat, outputnode, [('confounds_file', 'confounds_file')]),
     
