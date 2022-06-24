@@ -45,10 +45,6 @@ Units of time should always be seconds.
 
 '''
 
-### To do:
-# loan in json with scan names instead of using inputs
-# make sure script can find examcard
-
 from __future__ import print_function
 import json
 import re
@@ -202,7 +198,7 @@ def main(argv):
 				# Parse exam card for label delay
 				search_tmp = search_string_in_file(inputfile,'label delay',start_line)
 				tmp = search_tmp[0][1].split(':')
-				label_delay = int(tmp[-1].strip())/1000
+				label_delay = float(tmp[-1].strip())/1000
 				print('\tLabel delay:',label_delay, 'sec')
 				scan_dict[scan]["PostLabelingDelay"] = label_delay
 
@@ -224,6 +220,12 @@ def main(argv):
 				ta = tr/n_slices
 				slice_timing = np.linspace(0,tr-ta,n_slices) #ascending
 
+				# If slice order is descending, flip the slice timing list
+				search_tmp = search_string_in_file(inputfile,'Slice scan order',start_line)
+				tmp = search_tmp[0][1].split(':')
+				if tmp[-1].strip() == 'DESCEND':
+					slice_timing = slice_timing.reverse()
+
 				print('\tSlice timing:',slice_timing, 'sec')
 				scan_dict[scan]["SliceTiming"] = slice_timing.tolist()
 
@@ -233,7 +235,7 @@ def main(argv):
 					if not search_tmp:
 						search_tmp = search_string_in_file(inputfile,'EX_FLL_casl_dur',start_line)
 					tmp = search_tmp[0][1].split(':')
-					label_duration = int(tmp[-1].strip())/1000
+					label_duration = float(tmp[-1].strip())/1000
 					print('\tLabeling duration:',label_duration, 'sec')
 					scan_dict[scan]["LabelingDuration"] = label_duration
 
