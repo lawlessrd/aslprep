@@ -822,6 +822,7 @@ class _qccbfInputSpec(BaseInterfaceInputSpec):
     in_aslmaskstd = File(exists=True, mandatory=False, desc='asl mask in native space')
     in_templatemask = File(exists=True, mandatory=False, desc='template mask or image')
     qc_file = File(exists=False, mandatory=False, desc='qc file ')
+    rmsd_file = File(exists=True, mandatory=True, desc='rmsd file')
 
 
 class _qccbfOutputSpec(TraitedSpec):
@@ -844,9 +845,11 @@ class qccbf(SimpleInterface):
         time1 = pd.read_csv(self.inputs.in_confmat, sep='\t')
         time1.fillna(0, inplace=True)
         fd = np.mean(time1['framewise_displacement'])
-        rms = time1[['rot_x', 'rot_y', 'rot_z']]
-        rms1 = rms.pow(2)
-        rms = np.mean(np.sqrt(rms1.sum(axis=1)/3))
+        # rms = time1[['rot_x', 'rot_y', 'rot_z']]
+        # rms1 = rms.pow(2)
+        # rms = np.mean(np.sqrt(rms1.sum(axis=1)/3))
+        print (self.inputs.rmsd_file)
+        rms = pd.read_csv(self.inputs.rmsd_file,header=None).mean().values[0]
         regDC = dc(self.inputs.in_aslmask, self.inputs.in_t1mask)
         regJC = jc(self.inputs.in_aslmask, self.inputs.in_t1mask)
         regCC = crosscorr(self.inputs.in_aslmask, self.inputs.in_t1mask)
@@ -871,10 +874,11 @@ class qccbf(SimpleInterface):
             negscore = negativevoxel(cbf=self.inputs.in_avgscore, gm=self.inputs.in_greyM, thresh=0.7)
             negscrub = negativevoxel(cbf=self.inputs.in_scrub, gm=self.inputs.in_greyM, thresh=0.7)
         else:
-            scorecbf_qei = 0
-            scrub_qei = 0 
-            negscore = 0
-            negscrub = 0
+            print ('no score inputs, setting to np.nan')
+            scorecbf_qei = np.nan
+            scrub_qei = np.nan 
+            negscore = np.nan
+            negscrub = np.nan
 
         if self.inputs.in_basil:
             basilcbf_qei = cbf_qei(gm=self.inputs.in_greyM, wm=self.inputs.in_whiteM,
@@ -884,10 +888,11 @@ class qccbf(SimpleInterface):
             negbasil = negativevoxel(cbf=self.inputs.in_basil, gm=self.inputs.in_greyM, thresh=0.7)
             negpvc = negativevoxel(cbf=self.inputs.in_pvc, gm=self.inputs.in_greyM, thresh=0.7)
         else:
-            basilcbf_qei = 0
-            pvcbf_qei = 0 
-            negbasil = 0
-            negpvc = 0
+            print ('no basil inputs, setting to np.nan')
+            basilcbf_qei = np.nan
+            pvcbf_qei = np.nan
+            negbasil = np.nan
+            negpvc = np.nan
         
         
         gwratio = np.divide(meancbf[0], meancbf[1])
@@ -896,7 +901,7 @@ class qccbf(SimpleInterface):
         
 
         if self.inputs.in_aslmaskstd and self.inputs.in_templatemask:
-            dict1 = {'FD': [fd], 'relRMS': [rms], 'coregDC': [regDC], 'coregJC': [regJC],
+            dict1 = {'FD': [fd], 'rmsd': [rms], 'coregDC': [regDC], 'coregJC': [regJC],
                      'coregCC': [regCC], 'coregCOV': [regCov], 'normDC': [normDC],
                      'normJC': [normJC], 'normCC': [normCC], 'normCOV': [normCov],
                      'cbfQEI': [meancbf_qei], 'scoreQEI': [scorecbf_qei], 'scrubQEI': [scrub_qei],
@@ -906,7 +911,7 @@ class qccbf(SimpleInterface):
                      'NEG_SCRUB_PERC': [negscrub], 'NEG_BASIL_PERC': [negbasil],
                      'NEG_PVC_PERC': [negpvc]}
         else:
-            dict1 = {'FD': [fd], 'relRMS': [rms], 'coregDC': [regDC], 'coregJC': [regJC],
+            dict1 = {'FD': [fd], 'rmsd': [rms], 'coregDC': [regDC], 'coregJC': [regJC],
                      'coregCC': [regCC], 'coregCOV': [regCov],
                      'cbfQEI': [meancbf_qei], 'scoreQEI': [scorecbf_qei], 'scrubQEI': [scrub_qei],
                      'basilQEI': [basilcbf_qei], 'pvcQEI': [pvcbf_qei], 'GMmeanCBF': [meancbf[0]],
