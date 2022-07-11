@@ -229,7 +229,7 @@ def main(argv):
 				print('\tSlice timing:',slice_timing, 'sec')
 				scan_dict[scan]["SliceTiming"] = slice_timing.tolist()
 
-				if asl_type == 'pCASL' or 'CASL':
+				if asl_type == 'pCASL' or 'CASL' or 'PCASL':
 					# Parse exam card for background suppression
 					search_tmp = search_string_in_file(inputfile,'label duration',start_line)
 					if not search_tmp:
