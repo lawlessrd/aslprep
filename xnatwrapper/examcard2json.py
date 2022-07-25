@@ -194,7 +194,6 @@ def main(argv):
 				print('\tBackground Suppression:', back_supp)
 				scan_dict[scan]["BackgroundSuppression"] = back_supp
 
-
 				# Parse exam card for label delay
 				search_tmp = search_string_in_file(inputfile,'label delay',start_line)
 				tmp = search_tmp[0][1].split(':')
@@ -239,6 +238,55 @@ def main(argv):
 					print('\tLabeling duration:',label_duration, 'sec')
 					scan_dict[scan]["LabelingDuration"] = label_duration
 
+					# Parse examcard for Background Suppression Pulses
+					search_tmp = search_string_in_file(inputfile,'back. supp. pulses',start_line)
+					tmp = search_tmp[0][1].split(':')
+					back_supp_pulses_str = tmp[-1].strip()
+
+					back_supp_pulses = list(back_supp_pulses_str.split(" "))
+
+					back_supp_list = [float(x)/1000 for x in back_supp_pulses]
+					back_supp_num_pulses = len(back_supp_list)
+
+					print('\tBackground Suppression Pulses:', back_supp_list, 'sec')
+					print('\tNumber of Background Suppression Pulses:', back_supp_num_pulses)
+					scan_dict[scan]["BackgroundSuppressionPulseTime"] = back_supp_list
+					scan_dict[scan]["BackgroundSuppressionNumberPulses"] = back_supp_num_pulses
+
+					# Parse examcard for label distance
+					search_tmp = search_string_in_file(inputfile,'label distance',start_line)
+					tmp = search_tmp[0][1].split(':')
+					label_distance = tmp[-1].strip()
+					print('\tLabel Distance:', label_distance, 'mm')
+					scan_dict[scan]["LabelDistance"] = label_distance
+
+					# Parse examcard for AcquisitionVoxelSize
+					acq_vox_size = []
+					search_tmp = search_string_in_file(inputfile,'ACQ voxel size',start_line)
+					tmp = search_tmp[0][1].split(':')
+					acq_vox_size.append(float(tmp[-1].strip()))
+					tmp = search_tmp[1][1].split(':')
+					acq_vox_size.append(float(tmp[-1].strip()))
+
+					search_tmp = search_string_in_file(inputfile,'Slice thickness',start_line)
+					tmp = search_tmp[0][1].split(':')
+					acq_vox_size.append(float(tmp[-1].strip()))
+
+					print('\tAcquisitionVoxelSize:', acq_vox_size, 'mm')
+					scan_dict[scan]["AcquisitionVoxelSize"] = acq_vox_size
+
+					# Parse examcard for Vascular crushing
+					search_tmp = search_string_in_file(inputfile,'vascular crushing',start_line)
+					tmp = search_tmp[0][1].split(':')
+					vasc_crush = tmp[-1].strip()
+					if vasc_crush == 'NO':
+						vasc_crush = False
+					else:
+						vasc_crush = True
+					print('\tVascular crushing:', vasc_crush)
+					scan_dict[scan]["VascularCrushing"] = vasc_crush
+
+
 				if asl_type == 'pASL':
 					# Parse exam card for background suppression
 					#search_tmp = search_string_in_file(inputfile,'BolusCutOffFlag',start_line)
@@ -246,6 +294,63 @@ def main(argv):
 					#bolus = tmp[-1].strip()
 					#print('\tBolus Cut Off Flag:',bolus)
 					scan_dict[scan]["BolusCutOffFlag"] = False
+
+					# Parse exam card for background suppression
+					search_tmp = search_string_in_file(inputfile,'label duration',start_line)
+					if not search_tmp:
+						search_tmp = search_string_in_file(inputfile,'EX_FLL_casl_dur',start_line)
+					tmp = search_tmp[0][1].split(':')
+					label_duration = float(tmp[-1].strip())/1000
+					print('\tLabeling duration:',label_duration, 'sec')
+					scan_dict[scan]["LabelingDuration"] = label_duration
+
+					# Parse examcard for Background Suppression Pulses
+					search_tmp = search_string_in_file(inputfile,'back. supp. pulses',start_line)
+					tmp = search_tmp[0][1].split(':')
+					back_supp_pulses_str = tmp[-1].strip()
+
+					back_supp_pulses = list(back_supp_pulses_str.split(" "))
+
+					back_supp_list = [float(x)/1000 for x in back_supp_pulses]
+					back_supp_num_pulses = len(back_supp_list)
+
+					print('\tBackground Suppression Pulses:', back_supp_list, 'sec')
+					print('\tNumber of Background Suppression Pulses:', back_supp_num_pulses)
+					scan_dict[scan]["BackgroundSuppressionPulseTime"] = back_supp_list
+					scan_dict[scan]["BackgroundSuppressionNumberPulses"] = back_supp_num_pulses
+
+					# Parse examcard for label distance
+					search_tmp = search_string_in_file(inputfile,'label distance',start_line)
+					tmp = search_tmp[0][1].split(':')
+					label_distance = tmp[-1].strip()
+					print('\tLabel Distance:', label_distance, 'mm')
+					scan_dict[scan]["LabelDistance"] = label_distance
+
+					# Parse examcard for AcquisitionVoxelSize
+					acq_vox_size = []
+					search_tmp = search_string_in_file(inputfile,'ACQ voxel size',start_line)
+					tmp = search_tmp[0][1].split(':')
+					acq_vox_size.append(float(tmp[-1].strip()))
+					tmp = search_tmp[1][1].split(':')
+					acq_vox_size.append(float(tmp[-1].strip()))
+
+					search_tmp = search_string_in_file(inputfile,'Slice thickness',start_line)
+					tmp = search_tmp[0][1].split(':')
+					acq_vox_size.append(float(tmp[-1].strip()))
+
+					print('\tAcquisitionVoxelSize:', acq_vox_size, 'mm')
+					scan_dict[scan]["AcquisitionVoxelSize"] = acq_vox_size
+
+					# Parse examcard for Vascular crushing
+					search_tmp = search_string_in_file(inputfile,'vascular crushing',start_line)
+					tmp = search_tmp[0][1].split(':')
+					vasc_crush = tmp[-1].strip()
+					if vasc_crush == 'NO':
+						vasc_crush = False
+					else:
+						vasc_crush = True
+					print('\tVascular crushing:', vasc_crush)
+					scan_dict[scan]["VascularCrushing"] = vasc_crush
 
 				# Add exam card info to asl json
 				json_file = glob.glob(bids+'/sub-*/ses-*/perf/*asl.json')
