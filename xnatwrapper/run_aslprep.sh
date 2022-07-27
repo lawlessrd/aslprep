@@ -52,7 +52,7 @@ bidsdir=$indir/BIDS
 /opt/xnatwrapper/create_tsv.py -b ${bidsdir}
 
 #Run aslprep
-aslprep --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level}
+aslprep --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level} -w ${indir}
 
 #Run py scripts to convert outputs
 /opt/xnatwrapper/html2pdf.py -o ${outdir}

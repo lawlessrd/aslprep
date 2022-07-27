@@ -11,8 +11,8 @@ singularity run \
 aslprep.simg \
 --indir $(pwd -P)/INPUTS \
 --outdir $(pwd -P)/OUTPUTS \
---m0scan $(pwd -P)/INPUTS/pCASL_M0.dcm \
---aslscan $(pwd -P)/INPUTS/pCASL.dcm \
---sourcescan $(pwd -P)/INPUTS/source_pCASL.dcm \
+--m0scan $(pwd -P)/INPUTS/ASL_M0.dcm \
+--aslscan $(pwd -P)/INPUTS/ASL.dcm \
+--sourcescan $(pwd -P)/INPUTS/ASL_source.dcm \
 --examcard $(pwd -P)/INPUTS/examcard.txt \
 --fs_license $(pwd -P)/license.txt 

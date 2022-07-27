@@ -157,7 +157,6 @@ def main(argv):
 			if asl_type == 'NO':
 				print('\tASL type: M0 scan')
 				# Get file name for non-m0 scan to set as 'IntendedFor'
-				# Change this to look through BIDS directory
 				for s in scannames:
 					if s.find('m0') == -1 & s.find('M0') == -1:
 						for nii_file in glob.glob(bids + '/sub-*/ses-*/perf/*.nii.gz'):
@@ -166,6 +165,23 @@ def main(argv):
 								IntendedFor = '/'.join(asl_nii[-3:])
 								print('\tM0 intended for: ',IntendedFor)
 								scan_dict[scan]["IntendedFor"] = IntendedFor	
+				
+				# Parse examcard for AcquisitionVoxelSize
+				acq_vox_size = []
+				search_tmp = search_string_in_file(inputfile,'ACQ voxel size',start_line)
+				tmp = search_tmp[0][1].split(':')
+				acq_vox_size.append(float(tmp[-1].strip()))
+				tmp = search_tmp[1][1].split(':')
+				acq_vox_size.append(float(tmp[-1].strip()))
+
+				search_tmp = search_string_in_file(inputfile,'Slice thickness',start_line)
+				tmp = search_tmp[0][1].split(':')
+				acq_vox_size.append(float(tmp[-1].strip()))
+
+				print('\tAcquisitionVoxelSize:', acq_vox_size, 'mm')
+				scan_dict[scan]["AcquisitionVoxelSize"] = acq_vox_size
+
+
 				# Add exam card info to m0 json
 				json_file = glob.glob(bids+'/sub-*/ses-*/perf/*m0scan.json')
 				modify_json(json_file[0],scan_dict[scan])
