@@ -8,7 +8,6 @@ singularity run \
 --bind $(pwd -P)/INPUTS:/data:ro \
 --bind $(pwd -P)/OUTPUTS:/out:rw \
 --bind $(pwd -P)/license.txt:/license/license.txt \
---bind $(pwd -P)/work:/work:rw \
 aslprep.simg \
 --indir $(pwd -P)/INPUTS \
 --outdir $(pwd -P)/OUTPUTS \
