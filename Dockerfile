@@ -247,6 +247,20 @@ RUN pip install --no-cache-dir "$( grep templateflow aslprep-setup.cfg | xargs )
     find $HOME/.cache/templateflow -type d -exec chmod go=u {} + && \
     find $HOME/.cache/templateflow -type f -exec chmod go=u {} +
 
+### Additions by Dylan Lawless for VUIIS
+
+#Install fpdf, generate machine ID
+RUN pip install --no-cache-dir fpdf weasyprint==52.5 glob2 nibabel pydicom
+
+RUN conda install -c conda-forge dcm2niix
+
+#Copy xnatwrapper
+COPY xnatwrapper /opt/xnatwrapper
+
+RUN find /opt/xnatwrapper -type d -exec chmod 755 {} \;
+
+### End
+
 # Installing ASLPREP
 COPY . /src/aslprep
 
@@ -269,7 +283,7 @@ RUN find $HOME -type d -exec chmod go=u {} + && \
 
 RUN ldconfig
 WORKDIR /tmp/
-ENTRYPOINT ["/usr/local/miniconda/bin/aslprep"]
+ENTRYPOINT ["/opt/xnatwrapper/run_aslprep.sh"]
 
 ARG BUILD_DATE
 ARG VCS_REF
