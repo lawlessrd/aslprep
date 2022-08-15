@@ -51,9 +51,9 @@ def main(argv):
 				csv_writer.writerow(['volume_type'])
 				for x in range(asl_img.shape[3]):
 					if (x % 2) == 0:
-						csv_writer.writerow(['label'])
-					else:
 						csv_writer.writerow(['control'])
+					else:
+						csv_writer.writerow(['label'])
 
 	else:
 		print('Files not found or data is not in BIDS format. Please repeat with correct file/structure.')
