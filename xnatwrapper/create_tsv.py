@@ -3,6 +3,7 @@
 '''
 Inputs:
 	-b: BIDS file structure containing nifti files and json sidecars
+	-v: indicate if first volume in ASL_source is 'control' or 'label'
 Outputs:
 	updated json sidecar for ASL images in Exam Card
 		Name: sub-01_ses-01_asl.json OR sub-01_ses-01_m0scan.json
@@ -18,8 +19,9 @@ import nibabel as nib
 
 def main(argv):
 	bids = ''
+	firstvol=''
 	try:
-		opts, args = getopt.getopt(argv, "hb:",["bids="])
+		opts, args = getopt.getopt(argv, "hbv:",["bids=","firstvol="])
 	except getopt.GetoptError:
 		print('create_tsv.py -b <folder>')
 		sys.exit(2)
@@ -29,6 +31,8 @@ def main(argv):
 			sys.exit()
 		elif opt in ("-b", "--bids"):
 			bids = arg
+		elif opt in ("-v", "--firstvol"):
+			firstvol = arg
 
 	print('BIDS Folder: ', bids)
 
@@ -50,10 +54,16 @@ def main(argv):
 				csv_writer=csv.writer(tsv_file,delimiter='\t')
 				csv_writer.writerow(['volume_type'])
 				for x in range(asl_img.shape[3]):
-					if (x % 2) == 0:
-						csv_writer.writerow(['control'])
+					if firstvol == 'control'
+						if (x % 2) == 0:
+							csv_writer.writerow(['control'])
+						else:
+							csv_writer.writerow(['label'])
 					else:
-						csv_writer.writerow(['label'])
+						if (x % 2) == 0:
+							csv_writer.writerow(['label'])
+						else:
+							csv_writer.writerow(['control'])
 
 	else:
 		print('Files not found or data is not in BIDS format. Please repeat with correct file/structure.')

@@ -15,4 +15,5 @@ aslprep.simg \
 --aslscan $(pwd -P)/INPUTS/ASL.dcm \
 --sourcescan $(pwd -P)/INPUTS/ASL_source.dcm \
 --examcard $(pwd -P)/INPUTS/examcard.txt \
---fs_license $(pwd -P)/license.txt 
+--fs_license $(pwd -P)/license.txt \
+--firstvol 'control'

@@ -2,7 +2,7 @@
 
 ### Script for aslprep singularity container
 # Dylan Lawless
-# Usage: run_aslprep: [--indir] [--outdir] [--m0scan] [--aslscan] [--aslsource] [--examcard] [--fs_license]
+# Usage: run_aslprep: [--indir] [--outdir] [--m0scan] [--aslscan] [--aslsource] [--examcard] [--fs_license] [--firstvol]
 
 
 # Initialize defaults
@@ -13,6 +13,7 @@ export m0scan=NO_M0SCAN
 export aslscan=NO_ASLSCAN
 export aslsource=NO_ASLSOURCE
 export examcard=NO_EXAMCARD
+export firstvol=control
 
 # Parse options
 while [[ $# -gt 0 ]]; do
@@ -32,6 +33,8 @@ while [[ $# -gt 0 ]]; do
       export examcard="${2}"; shift; shift ;;
     --fs_license)
       export fs_license="${2}"; shift; shift ;;
+    --firstvol)
+      export firstvol="${2}"; shift; shift ;;
     *)
       echo Unknown input "${1}"; shift ;;
   esac
@@ -49,7 +52,7 @@ bidsdir=$indir/BIDS
 /opt/xnatwrapper/examcard2json.py -i ${indir} -b ${bidsdir} -e ${examcard}
 
 #Create ASL context tsv file
-/opt/xnatwrapper/create_tsv.py -b ${bidsdir}
+/opt/xnatwrapper/create_tsv.py -b ${bidsdir} -v ${firstvol}
 
 #Run aslprep
 aslprep --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level} -w ${outdir}
