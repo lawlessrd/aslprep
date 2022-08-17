@@ -21,7 +21,7 @@ def main(argv):
 	bids = ''
 	firstvol=''
 	try:
-		opts, args = getopt.getopt(argv, "hbv:",["bids=","firstvol="])
+		opts, args = getopt.getopt(argv, "hb:v:",["bids=","firstvol="])
 	except getopt.GetoptError:
 		print('create_tsv.py -b <folder>')
 		sys.exit(2)
