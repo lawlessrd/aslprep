@@ -217,7 +217,7 @@ RUN apt-get install -y nodejs
 RUN npm install -g svgo
 
 # Installing bids-validator
-RUN npm install -g bids-validator@1.8.4 
+RUN npm install -g bids-validator@1.8.9 
 
 # Unless otherwise specified each process should only use one thread - nipype
 # will handle parallelization

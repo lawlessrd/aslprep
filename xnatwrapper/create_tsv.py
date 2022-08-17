@@ -54,7 +54,7 @@ def main(argv):
 				csv_writer=csv.writer(tsv_file,delimiter='\t')
 				csv_writer.writerow(['volume_type'])
 				for x in range(asl_img.shape[3]):
-					if firstvol == 'control'
+					if firstvol == 'control':
 						if (x % 2) == 0:
 							csv_writer.writerow(['control'])
 						else:
