@@ -218,7 +218,7 @@ def main(argv):
 				scan_dict[scan]["PostLabelingDelay"] = label_delay
 
 				# Labeling efficiency
-				scan_dict[scan]["LabelingEfficiency"] = 0.85
+				scan_dict[scan]["LabelingEfficiency"] = 0.80
 
 				# Parse exam card for TR and nSlices to generate slice timing
 				search_tmp = search_string_in_file(inputfile,'Slices',start_line)
