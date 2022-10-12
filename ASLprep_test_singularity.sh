@@ -16,4 +16,5 @@ aslprep.simg \
 --sourcescan $(pwd -P)/INPUTS/ASL_source.dcm \
 --examcard $(pwd -P)/INPUTS/examcard.txt \
 --fs_license $(pwd -P)/license.txt \
+--label_eff 0.8
 --firstvol 'control'

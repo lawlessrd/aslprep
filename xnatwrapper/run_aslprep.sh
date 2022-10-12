@@ -14,6 +14,7 @@ export aslscan=NO_ASLSCAN
 export aslsource=NO_ASLSOURCE
 export examcard=NO_EXAMCARD
 export firstvol=control
+export label_eff=1
 
 # Parse options
 while [[ $# -gt 0 ]]; do
@@ -35,6 +36,8 @@ while [[ $# -gt 0 ]]; do
       export fs_license="${2}"; shift; shift ;;
     --firstvol)
       export firstvol="${2}"; shift; shift ;;
+    --label_eff)
+      export label_eff="${2}"; shift; shift;;
     *)
       echo Unknown input "${1}"; shift ;;
   esac
@@ -49,7 +52,7 @@ done
 bidsdir=$indir/BIDS
 
 #Get necessary data form examcard and write to json sidecar
-/opt/xnatwrapper/examcard2json.py -i ${indir} -b ${bidsdir} -e ${examcard}
+/opt/xnatwrapper/examcard2json.py -i ${indir} -b ${bidsdir} -e ${examcard} -l ${label_eff}
 
 #Create ASL context tsv file
 /opt/xnatwrapper/create_tsv.py -b ${bidsdir} -v ${firstvol}

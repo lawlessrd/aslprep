@@ -108,10 +108,11 @@ def main(argv):
 	scannames = ''
 	bids = ''
 	inputfile= ''
+	label_eff = ''
 	try:
-		opts, args = getopt.getopt(argv, "hi:b:e:",["input=","bids=","examcard="])
+		opts, args = getopt.getopt(argv, "hi:b:e:l:",["input=","bids=","examcard=","label_eff="])
 	except getopt.GetoptError:
-		print('examcard2json.py -i <indir> -b <folder> -e <examcard.txt>')
+		print('examcard2json.py -i <indir> -b <folder> -e <examcard.txt> -l label_eff')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
@@ -123,6 +124,8 @@ def main(argv):
 			bids = arg
 		elif opt in ("-e","--examcard"):
 			inputfile = arg
+		elif opt in ("-l","--label_eff"):
+			label_eff = float(arg)
 
 
 	#Initialize dictionaries
@@ -218,7 +221,7 @@ def main(argv):
 				scan_dict[scan]["PostLabelingDelay"] = label_delay
 
 				# Labeling efficiency
-				scan_dict[scan]["LabelingEfficiency"] = 0.80
+				scan_dict[scan]["LabelingEfficiency"] = label_eff
 
 				# Parse exam card for TR and nSlices to generate slice timing
 				search_tmp = search_string_in_file(inputfile,'Slices',start_line)
