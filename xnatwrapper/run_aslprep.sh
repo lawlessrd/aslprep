@@ -58,7 +58,7 @@ bidsdir=$indir/BIDS
 /opt/xnatwrapper/create_tsv.py -b ${bidsdir} -v ${firstvol}
 
 #Run aslprep
-aslprep --scorescrub --basil --m0_scale 1.25 --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level}
+aslprep --scorescrub --basil --m0_scale ${m0_scale} --fs-license-file ${fs_license} ${bidsdir} ${outdir} ${level}
 
 #Run py scripts to convert outputs
 /opt/xnatwrapper/html2pdf.py -o ${outdir}
