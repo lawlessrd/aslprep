@@ -40,7 +40,7 @@ while [[ $# -gt 0 ]]; do
     --label_eff)
       export label_eff="${2}"; shift; shift;;
     --m0_scale)
-      export m0_scale=="${2}"; shift; shift;;
+      export m0_scale="${2}"; shift; shift;;
     *)
       echo Unknown input "${1}"; shift ;;
   esac
