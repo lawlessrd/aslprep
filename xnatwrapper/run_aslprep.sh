@@ -15,6 +15,7 @@ export aslsource=NO_ASLSOURCE
 export examcard=NO_EXAMCARD
 export firstvol=control
 export label_eff=1
+export m0_scale=1
 
 # Parse options
 while [[ $# -gt 0 ]]; do
@@ -38,6 +39,8 @@ while [[ $# -gt 0 ]]; do
       export firstvol="${2}"; shift; shift ;;
     --label_eff)
       export label_eff="${2}"; shift; shift;;
+    --m0_scale)
+      export m0_scale=="${2}"; shift; shift;;
     *)
       echo Unknown input "${1}"; shift ;;
   esac
